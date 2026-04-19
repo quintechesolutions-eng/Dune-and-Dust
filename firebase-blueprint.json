@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Information about the user and their travel preferences.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string", "description": "The user's full name." },
+        "photoURL": { "type": "string", "description": "URL to the user's profile picture." },
+        "bio": { "type": "string", "description": "A short bio about the explorer." },
+        "vehicle": {
+          "type": "object",
+          "properties": {
+            "make": { "type": "string" },
+            "model": { "type": "string" },
+            "drivetrain": { "type": "string" },
+            "fuelType": { "type": "string" }
+          }
+        },
+        "preferredRegions": { "type": "array", "items": { "type": "string" } },
+        "totalTripsPlanned": { "type": "integer", "description": "Counter for leaderboards." }
+      },
+      "required": ["displayName"]
+    },
+    "Itinerary": {
+      "title": "Travel Itinerary",
+      "description": "A planned journey through Namibia.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userPhoto": { "type": "string" },
+        "title": { "type": "string" },
+        "overview": { "type": "string" },
+        "days": { "type": "integer" },
+        "month": { "type": "string" },
+        "budget": { "type": "string" },
+        "pace": { "type": "string" },
+        "detailLevel": { "type": "string" },
+        "data": { "type": "object", "description": "The full JSON output from Gemini." },
+        "likes": { "type": "integer", "description": "Number of upvotes." },
+        "isPublic": { "type": "boolean", "description": "Whether others can see this trip." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "data"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles."
+    },
+    "/itineraries/{itineraryId}": {
+      "schema": "Itinerary",
+      "description": "Saved travel plans."
+    },
+    "/itineraries/{itineraryId}/likes/{userId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "likedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "description": "Subcollection to track unique likes."
+    }
+  }
+}

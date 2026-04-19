@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- User Profiles ---
+    match /users/{userId} {
+      allow get: if true; // Public profiles
+      allow list: if isSignedIn(); // Can search for users
+      allow create: if isOwner(userId) 
+        && incoming().displayName is string && incoming().displayName.size() <= 100
+        && (!('bio' in incoming()) || (incoming().bio is string && incoming().bio.size() <= 500));
+      allow update: if isOwner(userId)
+        && incoming().displayName is string && incoming().displayName.size() <= 100
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'bio', 'vehicle', 'preferredRegions', 'totalTripsPlanned']);
+    }
+
+    // --- Itineraries ---
+    match /itineraries/{itineraryId} {
+      function isValidItinerary(data) {
+        return data.userId is string && data.userId.size() <= 128
+          && data.title is string && data.title.size() <= 200
+          && data.data is map
+          && (!('likes' in data) || data.likes is int);
+      }
+
+      allow get: if existing().isPublic == true || isOwner(existing().userId);
+      allow list: if (isSignedIn() && resource.data.isPublic == true) || isOwner(resource.data.userId);
+      
+      allow create: if isSignedIn() && isOwner(incoming().userId) 
+        && isValidItinerary(incoming())
+        && incoming().createdAt == request.time;
+        
+      allow update: if (isOwner(existing().userId) 
+          && isValidItinerary(incoming())
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt)
+        || (isSignedIn() && incoming().diff(existing()).affectedKeys().hasOnly(['likes'])); // Allow liking via transaction
+
+      allow delete: if isOwner(existing().userId);
+
+      // --- Likes Subcollection ---
+      match /likes/{userId} {
+        allow read: if true;
+        allow write: if isOwner(userId);
+      }
+    }
+  }
+}
