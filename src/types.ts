@@ -4,6 +4,7 @@ export interface Traveler {
   age: number;
   hasLicense: boolean;
   dietary: string;
+  budgetUsd: number;
 }
 
 export interface Vehicle {
@@ -35,6 +36,8 @@ export interface ItineraryData {
     overview: string;
     travelerNotes: string;
     totalEstimatedDistanceKm: number;
+    climateExpectancy?: string;
+    wildlifeExpectancy?: string;
   };
   logistics: {
     packingList: string[];
@@ -45,6 +48,7 @@ export interface ItineraryData {
     day: number;
     location: string;
     driveTimeHours: string;
+    roadConditions?: string;
     fuelStopRecommendations: string;
     description: string;
     activities: string[];
@@ -58,6 +62,7 @@ export interface ItineraryData {
       name: string;
       type: string;
       bookingSearchQuery: string;
+      features?: string[];
     };
   }>;
 }
@@ -77,10 +82,41 @@ export interface SavedItinerary {
 
 export interface UserProfile {
   uid: string;
+  username: string; // Unique explorer handle
   displayName: string;
   photoURL: string;
   bio: string;
+  achievements: string[];
+  stats: {
+    totalLikes: number;
+    totalTrips: number;
+    daysExplored: number;
+  };
   vehicle: Vehicle;
-  preferredRegions: string[];
-  totalTripsPlanned: number;
+}
+
+export interface FriendRequest {
+  id: string;
+  fromId: string;
+  fromName: string;
+  toId: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  createdAt: any;
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  receiverId?: string; // Optional for group chats
+  text: string;
+  createdAt: any;
+}
+
+export interface ChatSession {
+  id: string;
+  isGroup: boolean;
+  name?: string;
+  members: string[]; // List of UIDs
+  updatedAt: any;
+  avatarURL?: string;
 }

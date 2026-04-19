@@ -25,6 +25,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onViewTrip }) => {
       const trips = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SavedItinerary[];
       setTopTrips(trips);
       setLoading(false);
+    }, (error) => {
+      console.error("Leaderboard listener error:", error);
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -63,7 +66,13 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onViewTrip }) => {
               </span>
 
               <div className="flex items-center gap-3">
-                <img src={trip.userPhoto} alt={trip.userName} className="w-8 h-8 rounded-full bg-stone-100" />
+                <img 
+                  src={trip.userPhoto || undefined} 
+                  alt={trip.userName} 
+                  className="w-8 h-8 rounded-full bg-stone-100" 
+                  referrerPolicy="no-referrer"
+                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + trip.userName; }}
+                />
                 <div>
                   <p className="font-semibold text-text-main truncate max-w-[200px]">{trip.title}</p>
                   <p className="text-xs text-text-muted uppercase tracking-wider font-bold">{trip.userName}</p>

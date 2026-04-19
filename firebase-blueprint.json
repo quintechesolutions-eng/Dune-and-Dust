@@ -5,9 +5,19 @@
       "description": "Information about the user and their travel preferences.",
       "type": "object",
       "properties": {
+        "username": { "type": "string", "description": "Unique explorer handle." },
         "displayName": { "type": "string", "description": "The user's full name." },
         "photoURL": { "type": "string", "description": "URL to the user's profile picture." },
         "bio": { "type": "string", "description": "A short bio about the explorer." },
+        "achievements": { "type": "array", "items": { "type": "string" } },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "totalLikes": { "type": "integer" },
+            "totalTrips": { "type": "integer" },
+            "daysExplored": { "type": "integer" }
+          }
+        },
         "vehicle": {
           "type": "object",
           "properties": {
@@ -16,11 +26,28 @@
             "drivetrain": { "type": "string" },
             "fuelType": { "type": "string" }
           }
-        },
-        "preferredRegions": { "type": "array", "items": { "type": "string" } },
-        "totalTripsPlanned": { "type": "integer", "description": "Counter for leaderboards." }
+        }
       },
-      "required": ["displayName"]
+      "required": ["username", "displayName"]
+    },
+    "FriendRequest": {
+      "type": "object",
+      "properties": {
+        "fromId": { "type": "string" },
+        "fromName": { "type": "string" },
+        "toId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Message": {
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
     },
     "Itinerary": {
       "title": "Travel Itinerary",
@@ -49,6 +76,16 @@
     "/users/{userId}": {
       "schema": "User",
       "description": "User profiles."
+    },
+    "/usernames/{username}": {
+      "schema": { "type": "object", "properties": { "uid": { "type": "string" } } },
+      "description": "Unique username registry."
+    },
+    "/friendRequests/{requestId}": {
+      "schema": "FriendRequest"
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": "Message"
     },
     "/itineraries/{itineraryId}": {
       "schema": "Itinerary",

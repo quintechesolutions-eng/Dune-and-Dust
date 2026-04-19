@@ -27,16 +27,43 @@ service cloud.firestore {
       return resource.data;
     }
 
+    // --- Usernames (Unique Registry) ---
+    match /usernames/{username} {
+      allow read: if true;
+      allow create: if isSignedIn() && incoming().uid == request.auth.uid && username.size() >= 3 && username.size() <= 30;
+    }
+
     // --- User Profiles ---
     match /users/{userId} {
-      allow get: if true; // Public profiles
-      allow list: if isSignedIn(); // Can search for users
+      allow get: if true;
+      allow list: if isSignedIn();
       allow create: if isOwner(userId) 
-        && incoming().displayName is string && incoming().displayName.size() <= 100
-        && (!('bio' in incoming()) || (incoming().bio is string && incoming().bio.size() <= 500));
+        && incoming().username is string
+        && incoming().displayName is string && incoming().displayName.size() <= 100;
       allow update: if isOwner(userId)
         && incoming().displayName is string && incoming().displayName.size() <= 100
-        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'bio', 'vehicle', 'preferredRegions', 'totalTripsPlanned']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'bio', 'vehicle', 'achievements', 'stats', 'username']);
+    }
+
+    // --- Friend Requests ---
+    match /friendRequests/{requestId} {
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.fromId || request.auth.uid == resource.data.toId);
+      allow create: if isSignedIn() && request.auth.uid == incoming().fromId;
+      allow update: if isSignedIn() && request.auth.uid == resource.data.toId && incoming().diff(existing()).affectedKeys().hasOnly(['status']);
+      allow delete: if isSignedIn() && (request.auth.uid == resource.data.fromId || request.auth.uid == resource.data.toId);
+    }
+
+    // --- Private & Group Chats ---
+    match /chats/{chatId} {
+      // Allow legacy split lookup OR modern member array lookup
+      allow read: if isSignedIn() && ((request.auth.uid in chatId.split('_')) || (request.auth.uid in resource.data.members));
+      allow create: if isSignedIn() && (request.auth.uid in incoming().members);
+      allow update: if isSignedIn() && (request.auth.uid in existing().members) && (request.auth.uid in incoming().members);
+      
+      match /messages/{messageId} {
+        allow read: if isSignedIn() && ((request.auth.uid in chatId.split('_')) || (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members));
+        allow create: if isSignedIn() && (request.auth.uid == incoming().senderId) && ((request.auth.uid in chatId.split('_')) || (request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.members));
+      }
     }
 
     // --- Itineraries ---
@@ -48,26 +75,32 @@ service cloud.firestore {
           && (!('likes' in data) || data.likes is int);
       }
 
-      allow get: if existing().isPublic == true || isOwner(existing().userId);
-      allow list: if (isSignedIn() && resource.data.isPublic == true) || isOwner(resource.data.userId);
+      // Explicit split for clarity and query optimization
+      allow read: if resource.data.isPublic == true;
+      allow read: if isSignedIn() && request.auth.uid == resource.data.userId;
       
-      allow create: if isSignedIn() && isOwner(incoming().userId) 
+      allow create: if isSignedIn() && request.auth.uid == incoming().userId
         && isValidItinerary(incoming())
         && incoming().createdAt == request.time;
         
-      allow update: if (isOwner(existing().userId) 
+      allow update: if (isSignedIn() && request.auth.uid == existing().userId
           && isValidItinerary(incoming())
           && incoming().userId == existing().userId
           && incoming().createdAt == existing().createdAt)
         || (isSignedIn() && incoming().diff(existing()).affectedKeys().hasOnly(['likes'])); // Allow liking via transaction
 
-      allow delete: if isOwner(existing().userId);
+      allow delete: if isSignedIn() && request.auth.uid == existing().userId;
 
       // --- Likes Subcollection ---
       match /likes/{userId} {
         allow read: if true;
-        allow write: if isOwner(userId);
+        allow write: if isSignedIn() && request.auth.uid == userId;
       }
+    }
+
+    // --- Health Check ---
+    match /test/connection {
+      allow get: if true;
     }
   }
 }

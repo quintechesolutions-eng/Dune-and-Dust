@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Users, Car, Navigation, Info, Home, ExternalLink, 
+  Users, Car, Navigation as NavIcon, Info, Home, ExternalLink, 
   Compass, CheckCircle2, Coffee, Utensils, Moon, DollarSign,
   Heart, Share2, ArrowLeft, Fuel, Backpack 
 } from 'lucide-react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { SavedItinerary } from '../types';
 import { db, auth } from '../lib/firebase';
 import { doc, runTransaction, getDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
+import { SocialShare } from './SocialShare';
 
 interface ItineraryViewProps {
   trip: SavedItinerary;
@@ -19,6 +20,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
   const [user] = useAuthState(auth);
   const [hasLiked, setHasLiked] = useState(false);
   const [localLikes, setLocalLikes] = useState(trip.likes || 0);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -63,15 +65,17 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
     }
   };
 
+  const shareUrl = `${window.location.origin}/?trip=${trip.id}`;
+
   return (
-    <div className="min-h-screen bg-[#fdfbf7] pb-24 font-sans">
+    <div className="min-h-screen bg-bg-main pb-24 font-sans">
       <motion.header 
         initial={{ opacity: 0 }} 
         animate={{ opacity: 1 }}
         className="bg-stone-900 text-white pt-12 pb-48 px-6 relative overflow-hidden"
       >
         <div className="absolute inset-0 opacity-20 transition-transform duration-[10s] hover:scale-110">
-          <img src="https://images.unsplash.com/photo-1517409228833-c90a18bb7201?auto=format&fit=crop&w=2000&q=80" className="w-full h-full object-cover" alt="Namibia" />
+          <img src="https://images.unsplash.com/photo-1517409228833-c90a18bb7201?auto=format&fit=crop&w=2000&q=80" className="w-full h-full object-cover" alt="Namibia" referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/namibialandscape/2000/1000'; }} />
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-stone-900 via-stone-900/80 to-transparent"></div>
         
@@ -88,10 +92,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                 <Heart className={`w-5 h-5 ${hasLiked ? 'fill-white' : ''}`} /> {localLikes}
               </button>
               <button 
-                onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
-                  alert("Link copied to clipboard!");
-                }}
+                onClick={() => setShowShare(true)}
                 className="p-3 bg-white/10 hover:bg-white/20 rounded-full border border-white/20 text-white transition"
               >
                 <Share2 className="w-5 h-5" />
@@ -101,11 +102,17 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
 
           <div className="max-w-4xl">
              <div className="flex items-center gap-3 mb-6">
-               <img src={trip.userPhoto} className="w-10 h-10 rounded-full border-2 border-amber-500" alt={trip.userName} />
-               <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">Architected by</p>
-                  <p className="font-bold text-white leading-none">{trip.userName}</p>
-               </div>
+                <img 
+                  src={trip.userPhoto || undefined} 
+                  className="w-10 h-10 rounded-full border-2 border-primary" 
+                  alt={trip.userName} 
+                  referrerPolicy="no-referrer" 
+                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + trip.userName; }}
+                />
+                <div>
+                   <p className="text-[10px] font-black uppercase tracking-widest text-primary">Architected by</p>
+                   <p className="font-bold text-white leading-none">{trip.userName}</p>
+                </div>
              </div>
              <h1 className="text-5xl md:text-7xl font-black leading-tight mb-6 tracking-tighter">{trip.title}</h1>
              <p className="text-xl md:text-2xl text-stone-300 font-medium leading-relaxed max-w-2xl opacity-80">{trip.overview}</p>
@@ -115,117 +122,162 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 relative -mt-32 z-20">
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
            {[ 
              { icon: Users, label: "Travelers", val: `${trip.data.dailyPlan[0]?.location ? 'Optimized' : 'N/A'}` }, 
-             { icon: Car, label: "Vehicle", val: `${trip.data.logistics.fuelAdvice.split(' ')[0]} Ready` },
-             { icon: Navigation, label: "Horizon", val: `~${trip.data.tripSummary.totalEstimatedDistanceKm} km` }
+             { icon: Car, label: "Vehicle", val: `${trip.data.logistics.fuelAdvice?.split(' ')[0] || 'Ready'}` },
+             { icon: NavIcon, label: "Horizon", val: `~${trip.data.tripSummary.totalEstimatedDistanceKm} km` },
+             { icon: Compass, label: "Climate Info", val: trip.data.tripSummary.climateExpectancy ? 'Assessed' : 'Standard' }
            ].map((stat, i) => (
              <motion.div 
                initial={{ opacity: 0, y: 20 }}
                animate={{ opacity: 1, y: 0 }}
                transition={{ delay: 0.2 + i * 0.1 }}
                key={i} 
-               className="bg-white p-8 rounded-[2rem] shadow-xl border border-stone-100 flex items-center gap-5"
+               className="bg-white p-6 rounded-[2rem] shadow-xl border border-stone-100 flex items-center gap-5"
              >
-                <div className="p-4 bg-stone-50 rounded-2xl"><stat.icon className="w-8 h-8 text-stone-800" /></div>
+                <div className="p-4 bg-stone-50 rounded-2xl shrink-0"><stat.icon className="w-6 h-6 text-primary" /></div>
                 <div>
                    <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                   <p className="font-black text-stone-900 text-xl">{stat.val}</p>
+                   <p className="font-black text-stone-900 text-lg">{stat.val}</p>
                 </div>
              </motion.div>
            ))}
         </div>
 
-        {/* Itinerary Body */}
-        <div className="space-y-16 mt-16">
-          {trip.data.dailyPlan.map((day, idx) => (
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              key={idx} 
-              className="bg-white rounded-[3rem] shadow-2xl border border-stone-100 overflow-hidden flex flex-col lg:flex-row group"
-            >
-              <div className="bg-stone-900 text-white lg:w-1/3 p-10 md:p-14 flex flex-col justify-between relative">
-                <div className="absolute top-0 right-0 p-8">
-                  <span className="text-6xl font-black text-white/5 select-none">#{day.day}</span>
-                </div>
-                <div className="relative z-10">
-                  <span className="text-amber-500 font-black text-sm uppercase tracking-widest block mb-4 italic">The Destination</span>
-                  <h3 className="text-5xl font-black leading-tight mb-8 tracking-tighter group-hover:text-amber-500 transition-colors">{day.location}</h3>
-                  <div className="space-y-6 text-stone-400 font-bold text-sm">
-                    <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5"><Car className="text-stone-300 w-5 h-5" /> Drive: {day.driveTimeHours}</div>
-                    <div className="flex items-start gap-4 p-4"><Fuel className="text-amber-500 w-5 h-5 shrink-0" /> <span>{day.fuelStopRecommendations}</span></div>
-                  </div>
-                </div>
-                
-                <div className="mt-16 bg-white/5 rounded-[2rem] p-8 border border-white/5 hover:bg-white/10 transition cursor-default">
-                  <p className="text-[10px] font-black text-stone-500 uppercase tracking-widest mb-3">Sanctuary</p>
-                  <p className="font-black text-2xl mb-1 text-white">{day.accommodation.name}</p>
-                  <p className="text-stone-400 text-sm mb-6 font-medium italic">{day.accommodation.type}</p>
-                  <a href={`https://www.google.com/search?q=${encodeURIComponent(day.accommodation.bookingSearchQuery || day.location)}`} target="_blank" rel="noreferrer" className="w-full inline-flex justify-center items-center gap-3 bg-white text-stone-900 py-4 rounded-2xl font-black hover:bg-stone-200 transition text-sm">
-                    Verify Sanctuary <ExternalLink className="w-4 h-4" />
-                  </a>
-                </div>
-              </div>
-
-              <div className="lg:w-2/3 p-10 md:p-14">
-                <p className="text-stone-700 text-xl font-medium leading-relaxed mb-12 italic border-l-4 border-amber-500 pl-8 overflow-hidden">
-                  "{day.description}"
+        {trip.data.tripSummary.wildlifeExpectancy && (
+          <motion.div 
+             initial={{ opacity: 0, y: 20 }}
+             animate={{ opacity: 1, y: 0 }}
+             transition={{ delay: 0.6 }}
+             className="bg-stone-900 text-white p-8 rounded-[2rem] shadow-xl mb-16 flex items-center gap-6"
+          >
+             <div className="p-4 bg-white/10 rounded-2xl"><Info className="w-8 h-8 text-primary" /></div>
+             <div>
+                <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-1">Wildlife Expectancy & Climate</p>
+                <p className="font-medium text-stone-300">
+                  {trip.data.tripSummary.wildlifeExpectancy} | {trip.data.tripSummary.climateExpectancy}
                 </p>
+             </div>
+          </motion.div>
+        )}
 
-                <div className="grid md:grid-cols-2 gap-12">
-                   <div className="space-y-8">
-                      <div>
-                        <h4 className="font-black text-2xl text-stone-900 mb-6 flex items-center gap-3"><Compass className="text-amber-600" /> The Maneuvers</h4>
-                        <ul className="space-y-5">
-                          {day.activities.map((act, i) => (
-                            <li key={i} className="flex gap-4 items-start font-bold text-stone-600">
-                               <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-1" />
-                               <span>{act}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                   </div>
+        {/* Itinerary Body */}
+        <div className="mt-16 relative">
+          <div className="absolute left-[39px] top-8 bottom-8 w-1 bg-stone-100 hidden lg:block" />
+          
+          <div className="space-y-24">
+            {trip.data.dailyPlan.map((day, idx) => (
+              <motion.div 
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                key={idx} 
+                className="relative lg:pl-24"
+              >
+                {/* Day Marker */}
+                <div className="absolute left-0 top-2 w-20 h-20 bg-stone-900 text-white rounded-3xl hidden lg:flex flex-col items-center justify-center border-4 border-white shadow-xl z-10 transition-transform group-hover:scale-110">
+                   <span className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Day</span>
+                   <span className="text-3xl font-black">{day.day}</span>
+                </div>
 
-                   <div className="bg-stone-50 p-8 rounded-[2rem] border border-stone-100 flex flex-col justify-between">
-                      <div className="space-y-6">
-                        <h4 className="font-black text-xl text-stone-900 mb-2 flex items-center gap-3"><Utensils className="text-stone-400" /> Dining Rations</h4>
-                        <div className="grid gap-4">
-                           <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
-                              <Coffee className="w-5 h-5 text-stone-400" /> <span className="font-bold text-stone-800 text-sm">{day.meals.breakfast}</span>
-                           </div>
-                           <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
-                              <Utensils className="w-5 h-5 text-stone-400" /> <span className="font-bold text-stone-800 text-sm">{day.meals.lunch}</span>
-                           </div>
-                           <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
-                              <Moon className="w-5 h-5 text-stone-400" /> <span className="font-bold text-stone-800 text-sm">{day.meals.dinner}</span>
-                           </div>
-                        </div>
+                <div className="bg-white rounded-[3rem] shadow-2xl border border-stone-100 overflow-hidden flex flex-col lg:flex-row group">
+                  <div className="bg-stone-900 text-white lg:w-1/3 p-10 md:p-14 flex flex-col justify-between relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-5">
+                      <Compass className="w-32 h-32" />
+                    </div>
+                    <div className="relative z-10">
+                      <span className="text-primary font-black text-sm uppercase tracking-widest block mb-4 italic">The Destination</span>
+                      <h3 className="text-5xl font-black leading-tight mb-8 tracking-tighter group-hover:text-primary transition-colors">{day.location}</h3>
+                      <div className="space-y-6 text-stone-400 font-bold text-sm">
+                        <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5"><Car className="text-stone-300 w-5 h-5" /> Drive: {day.driveTimeHours}</div>
+                        {day.roadConditions && <div className="flex items-start gap-4 p-4"><Info className="text-stone-400 w-5 h-5 shrink-0" /> <span className="italic">{day.roadConditions}</span></div>}
+                        <div className="flex items-start gap-4 p-4"><Fuel className="text-primary w-5 h-5 shrink-0" /> <span>{day.fuelStopRecommendations}</span></div>
                       </div>
-                      {day.meals.dietaryNotes && (
-                        <div className="mt-8 pt-6 border-t border-stone-200">
-                           <p className="text-[10px] font-black text-amber-600 uppercase mb-1">Ration Advisory</p>
-                           <p className="text-xs text-stone-500 italic font-medium">{day.meals.dietaryNotes}</p>
+                    </div>
+                    
+                    <div className="mt-16 bg-white/5 rounded-[2rem] p-8 border border-white/5 hover:bg-white/10 transition cursor-default">
+                      <p className="text-[10px] font-black text-stone-500 uppercase tracking-widest mb-3">Sanctuary</p>
+                      <p className="font-black text-2xl mb-1 text-white">{day.accommodation.name}</p>
+                      <p className="text-stone-400 text-sm mb-4 font-medium italic">{day.accommodation.type}</p>
+                      
+                      {day.accommodation.features && day.accommodation.features.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-6">
+                           {day.accommodation.features.map((feat, i) => (
+                             <span key={i} className="px-2 py-1 bg-white/10 rounded-lg text-[10px] uppercase font-bold text-stone-300">{feat}</span>
+                           ))}
                         </div>
                       )}
-                   </div>
+
+                      <a href={`https://www.google.com/search?q=${encodeURIComponent(day.accommodation.bookingSearchQuery || `${day.accommodation.name} Namibia`)}`} target="_blank" rel="noreferrer" className="w-full inline-flex justify-center items-center gap-3 bg-white text-stone-900 py-4 rounded-2xl font-black hover:bg-stone-200 transition text-sm">
+                        Verify Sanctuary <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="lg:w-2/3 p-10 md:p-14 bg-white">
+                    <div className="mb-12">
+                       <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-4">Daily Narrative</p>
+                       <p className="text-stone-700 text-2xl font-medium leading-relaxed italic border-l-4 border-primary pl-8 overflow-hidden">
+                         "{day.description}"
+                       </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-12">
+                       <div className="space-y-8">
+                          <div>
+                            <h4 className="font-black text-2xl text-stone-900 mb-6 flex items-center gap-3"><Compass className="text-primary" /> The Maneuvers</h4>
+                            <ul className="space-y-5">
+                              {day.activities.map((act, i) => (
+                                <li key={i} className="flex gap-4 items-start font-bold text-stone-600">
+                                   <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-1">
+                                      <CheckCircle2 className="w-4 h-4" />
+                                   </div>
+                                   <span>{act}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                       </div>
+
+                       <div className="bg-stone-50 p-8 rounded-[2rem] border border-stone-100 flex flex-col justify-between">
+                          <div className="space-y-6">
+                            <h4 className="font-black text-xl text-stone-900 mb-2 flex items-center gap-3"><Utensils className="text-stone-400" /> Dining Rations</h4>
+                            <div className="grid gap-4">
+                               <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
+                                  <Coffee className="w-5 h-5 text-stone-400" /> <span className="font-bold text-stone-800 text-sm whitespace-pre-wrap">{day.meals.breakfast}</span>
+                               </div>
+                               <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
+                                  <Utensils className="w-5 h-5 text-stone-400" /> <span className="font-bold text-stone-800 text-sm whitespace-pre-wrap">{day.meals.lunch}</span>
+                               </div>
+                               <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
+                                  <Moon className="w-5 h-5 text-stone-400" /> <span className="font-bold text-stone-800 text-sm whitespace-pre-wrap">{day.meals.dinner}</span>
+                               </div>
+                            </div>
+                          </div>
+                          {day.meals.dietaryNotes && (
+                            <div className="mt-8 pt-6 border-t border-stone-200">
+                               <p className="text-[10px] font-black text-primary uppercase mb-1">Ration Advisory</p>
+                               <p className="text-xs text-stone-500 italic font-medium leading-relaxed">{day.meals.dietaryNotes}</p>
+                            </div>
+                          )}
+                       </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            ))}
+          </div>
         </div>
 
         {/* Global Logistics */}
         <div className="mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
            <div className="lg:col-span-2 bg-white p-12 rounded-[3rem] shadow-xl border border-stone-100">
-              <h3 className="text-3xl font-black mb-8 flex items-center gap-4"><Backpack className="text-amber-600 w-8 h-8" /> Expedition Manifest</h3>
+              <h3 className="text-3xl font-black mb-8 flex items-center gap-4"><Backpack className="text-primary w-8 h-8" /> Expedition Manifest</h3>
               <div className="grid sm:grid-cols-2 gap-4">
                  {trip.data.logistics.packingList.map((item, i) => (
                     <div key={i} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-600">
-                       <div className="w-2 h-2 bg-amber-500 rounded-full" /> {item}
+                       <div className="w-2 h-2 bg-primary rounded-full" /> {item}
                     </div>
                  ))}
               </div>
@@ -238,6 +290,13 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
            </div>
         </div>
       </div>
+
+      <SocialShare 
+        isOpen={showShare} 
+        onClose={() => setShowShare(false)} 
+        title={trip.title} 
+        url={shareUrl} 
+      />
     </div>
   );
 };

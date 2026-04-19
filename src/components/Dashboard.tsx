@@ -27,6 +27,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
         const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SavedItinerary[];
         setTrips(data);
         setLoading(false);
+      }, (error) => {
+        console.error("Dashboard listener error:", error);
+        setLoading(false);
       });
 
       return () => unsubscribe();

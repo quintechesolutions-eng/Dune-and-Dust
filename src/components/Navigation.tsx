@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, Menu, User, LogOut, LayoutDashboard, Trophy, PlusCircle } from 'lucide-react';
+import { Compass, Menu, User, LogOut, LayoutDashboard, Trophy, PlusCircle, Users } from 'lucide-react';
 import { auth, signInWithGoogle, logout } from '../lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
@@ -33,23 +33,44 @@ export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) =>
             <Trophy className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Leaderboard</span>
           </button>
           <button 
+            onClick={() => onNav('social')}
+            className={`nav-item-polished ${currentView === 'social' ? 'nav-item-active-polished' : ''}`}
+          >
+            <Users className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Crew</span>
+          </button>
+          <button 
             onClick={() => onNav('wizard')}
             className="btn-primary-polished flex items-center gap-2"
           >
             <PlusCircle className="w-4 h-4" /> <span className="hidden sm:inline">Create Journey</span>
           </button>
 
-          {user && (
+          {user ? (
             <div className="flex items-center gap-3 pl-4 border-l border-border-subtle">
               <img 
                 src={user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user.displayName}`} 
                 alt="Avatar" 
-                className="w-8 h-8 rounded-full bg-stone-200 cursor-pointer"
+                className="w-8 h-8 rounded-full bg-stone-200 cursor-pointer object-cover border-2 border-transparent hover:border-primary transition duration-300"
                 onClick={() => onNav('profile')}
+                referrerPolicy="no-referrer"
+                onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${user.displayName}`; }}
               />
-              <button onClick={logout} className="text-text-muted hover:text-text-main transition px-1">
+              <button 
+                onClick={logout} 
+                className="text-stone-400 hover:text-stone-900 transition p-1"
+                title="Deauthorize"
+              >
                 <LogOut className="w-4 h-4" />
               </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 pl-4 border-l border-border-subtle">
+               <button 
+                  onClick={signInWithGoogle}
+                  className="flex items-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-900 px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm border border-stone-200"
+               >
+                  <User className="w-4 h-4" /> Sign In
+               </button>
             </div>
           )}
         </div>

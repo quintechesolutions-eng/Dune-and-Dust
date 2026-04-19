@@ -9,18 +9,20 @@ const outputSchema = {
     tripSummary: {
       type: Type.OBJECT,
       properties: {
-        headline: { type: Type.STRING },
-        overview: { type: Type.STRING },
+        headline: { type: Type.STRING, description: "A captivating, epic title for the journey." },
+        overview: { type: Type.STRING, description: "A detailed, expansive 2-3 paragraph overview of the entire journey. What makes it special, the general routing, and the core experience." },
         travelerNotes: { type: Type.STRING, description: "Notes on how the trip suits the specific ages and diets provided." },
-        totalEstimatedDistanceKm: { type: Type.INTEGER }
+        totalEstimatedDistanceKm: { type: Type.INTEGER },
+        climateExpectancy: { type: Type.STRING, description: "Expected weather conditions based on the month." },
+        wildlifeExpectancy: { type: Type.STRING, description: "Key wildlife species highly probable to be encountered." }
       },
-      required: ["headline", "overview", "travelerNotes", "totalEstimatedDistanceKm"]
+      required: ["headline", "overview", "travelerNotes", "totalEstimatedDistanceKm", "climateExpectancy", "wildlifeExpectancy"]
     },
     logistics: {
       type: Type.OBJECT,
       properties: {
         packingList: { type: Type.ARRAY, items: { type: Type.STRING } },
-        fuelAdvice: { type: Type.STRING, description: "Specific advice regarding fuel stations for the specific vehicle and fuel type." },
+        fuelAdvice: { type: Type.STRING, description: "Specific advice regarding fuel stations for the specific vehicle and fuel type. e.g. How often to fuel a hybrid or charge an EV." },
         estimatedBudgetTotalUSD: { type: Type.INTEGER }
       },
       required: ["packingList", "fuelAdvice", "estimatedBudgetTotalUSD"]
@@ -33,8 +35,9 @@ const outputSchema = {
           day: { type: Type.INTEGER },
           location: { type: Type.STRING },
           driveTimeHours: { type: Type.STRING },
+          roadConditions: { type: Type.STRING, description: "E.g., Tarred, heavy corrugation, deep sand, requires 4x4 engagement." },
           fuelStopRecommendations: { type: Type.STRING },
-          description: { type: Type.STRING },
+          description: { type: Type.STRING, description: "A lengthy, immersive narrative of the day's events, scenery, and activities." },
           activities: { type: Type.ARRAY, items: { type: Type.STRING } },
           meals: {
             type: Type.OBJECT,
@@ -51,12 +54,13 @@ const outputSchema = {
             properties: {
               name: { type: Type.STRING },
               type: { type: Type.STRING },
-              bookingSearchQuery: { type: Type.STRING }
+              bookingSearchQuery: { type: Type.STRING },
+              features: { type: Type.ARRAY, items: { type: Type.STRING }, description: "E.g. ['Pool', 'Waterhole view', 'Wi-Fi']" }
             },
-            required: ["name", "type", "bookingSearchQuery"]
+            required: ["name", "type", "bookingSearchQuery", "features"]
           }
         },
-        required: ["day", "location", "driveTimeHours", "fuelStopRecommendations", "description", "activities", "meals", "accommodation"]
+        required: ["day", "location", "driveTimeHours", "roadConditions", "fuelStopRecommendations", "description", "activities", "meals", "accommodation"]
       }
     }
   },
@@ -68,7 +72,8 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     Create a custom Namibian travel itinerary.
     
     Travelers: ${config.travelers.length} people.
-    ${config.travelers.map(t => `- ${t.name} (Age: ${t.age}, Driver License: ${t.hasLicense ? 'Yes' : 'No'}, Diet: ${t.dietary})`).join('\n')}
+    ${config.travelers.map(t => `- ${t.name} (Age: ${t.age}, Driver License: ${t.hasLicense ? 'Yes' : 'No'}, Diet: ${t.dietary}, Budget: $${t.budgetUsd || 0})`).join('\n')}
+    Total Group Budget: $${config.travelers.reduce((acc, t) => acc + (t.budgetUsd || 0), 0)} USD
     
     Vehicle Details: ${config.vehicle.make} ${config.vehicle.model} (${config.vehicle.drivetrain}), Fuel: ${config.vehicle.fuelType}.
     *CRITICAL: Provide specific fuel stop advice based on a ${config.vehicle.fuelType} vehicle driving in Namibia.*

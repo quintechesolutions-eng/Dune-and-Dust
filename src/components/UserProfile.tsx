@@ -1,15 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { User, Shield, Car, Map as MapIcon, Save } from 'lucide-react';
-import { db, auth } from '../lib/firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { User, Shield, Car, Save, Trophy, Star, Award, Zap, Camera, Search, Heart, LogOut, Trash2, ChevronRight } from 'lucide-react';
+import { db, auth, logout } from '../lib/firebase';
+import { doc, getDoc, setDoc, getDocs, collection, query, where, limit } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { UserProfile as UserProfileType } from '../types';
 import { motion } from 'motion/react';
+
+const ACHIEVEMENTS = [
+  { id: 'first_trip', label: 'First Migration', icon: Zap, color: 'text-amber-500 bg-amber-50', desc: 'Planned your first Namibian journey.' },
+  { id: 'social_star', label: 'Social Star', icon: Heart, color: 'text-red-500 bg-red-50', desc: 'Gathered 10+ likes on a single trip.' },
+  { id: 'dune_master', label: 'Dune Master', icon: Trophy, color: 'text-gold bg-amber-50', desc: 'Planned a trip with 20+ days.' },
+  { id: 'night_owl', label: 'Astrophotographer', icon: Camera, color: 'text-blue-500 bg-blue-50', desc: 'Included 3+ stargazing locations.' },
+];
 
 export const UserProfile: React.FC = () => {
   const [user] = useAuthState(auth);
   const [profile, setProfile] = useState<Partial<UserProfileType>>({});
   const [saving, setSaving] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
 
   useEffect(() => {
     if (user) {
@@ -20,12 +28,14 @@ export const UserProfile: React.FC = () => {
           setProfile(docSnap.data() as UserProfileType);
         } else {
           setProfile({
+            uid: user.uid,
+            username: '',
             displayName: user.displayName || '',
             photoURL: user.photoURL || '',
             bio: '',
-            vehicle: { make: 'Toyota', model: 'Hilux', drivetrain: '4x4', fuelType: 'Diesel' },
-            preferredRegions: [],
-            totalTripsPlanned: 0
+            achievements: ['first_trip'],
+            stats: { totalLikes: 0, totalTrips: 0, daysExplored: 0 },
+            vehicle: { make: 'Toyota', model: 'Hilux', drivetrain: '4x4', fuelType: 'Diesel' }
           });
         }
       };
@@ -33,15 +43,43 @@ export const UserProfile: React.FC = () => {
     }
   }, [user]);
 
+  const checkUsername = async (name: string) => {
+    if (name.length < 3) {
+      setUsernameStatus('idle');
+      return;
+    }
+    setUsernameStatus('checking');
+    const q = query(collection(db, 'usernames'), where('__name__', '==', name.toLowerCase()));
+    const snap = await getDocs(q);
+    if (!snap.empty && snap.docs[0].data().uid !== user?.uid) {
+      setUsernameStatus('taken');
+    } else {
+      setUsernameStatus('available');
+    }
+  };
+
   const save = async () => {
-    if (!user) return;
+    if (!user || !profile.username || usernameStatus === 'taken') return;
     setSaving(true);
-    await setDoc(doc(db, 'users', user.uid), {
-      ...profile,
-      uid: user.uid,
-      photoURL: user.photoURL // Keep synced with Google
-    }, { merge: true });
-    setSaving(false);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      const nameRef = doc(db, 'usernames', profile.username.toLowerCase());
+      
+      // Atomic username registration (Simplified here, ideally a transaction)
+      await setDoc(nameRef, { uid: user.uid });
+      await setDoc(userRef, {
+        ...profile,
+        uid: user.uid,
+        photoURL: user.photoURL 
+      }, { merge: true });
+      
+      alert("Explorer profile synchronized!");
+    } catch (e) {
+      console.error(e);
+      alert("Registry collision. Try another handle.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (!user) return (
@@ -51,65 +89,169 @@ export const UserProfile: React.FC = () => {
   );
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="max-w-6xl mx-auto py-12 px-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left: Basic Info */}
-        <div className="md:col-span-1 space-y-6">
-          <div className="bg-white p-8 rounded-[2rem] border border-stone-100 shadow-xl text-center">
-            <img src={user.photoURL || ''} className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-amber-500 shadow-lg" alt="Avatar" />
-            <h2 className="text-2xl font-black text-stone-900">{profile.displayName}</h2>
-            <p className="text-stone-400 text-sm font-bold uppercase tracking-widest">{profile.totalTripsPlanned} Journeys Planned</p>
+        {/* Left: Basic Info & Stats */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="card-polished p-8 text-center bg-white relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+            <img 
+              src={profile.photoURL || undefined} 
+              className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-white shadow-xl ring-2 ring-primary/20" 
+              alt="Avatar" 
+              referrerPolicy="no-referrer"
+              onError={(e) => { (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + profile.username; }}
+            />
+            <h2 className="text-2xl font-bold text-text-main">{profile.displayName}</h2>
+            <p className="text-primary font-bold text-sm mb-6">@{profile.username || 'unidentified_explorer'}</p>
+            
+            <div className="grid grid-cols-3 gap-2 py-4 border-t border-b border-stone-100">
+               <div>
+                  <p className="text-lg font-extrabold text-text-main">{profile.stats?.totalTrips || 0}</p>
+                  <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Trips</p>
+               </div>
+               <div>
+                  <p className="text-lg font-extrabold text-text-main">{profile.stats?.totalLikes || 0}</p>
+                  <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Likes</p>
+               </div>
+               <div>
+                  <p className="text-lg font-extrabold text-text-main">{profile.stats?.daysExplored || 0}</p>
+                  <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Days</p>
+               </div>
+            </div>
+          </div>
+
+          <div className="card-polished p-8 bg-white">
+            <h3 className="text-sm font-bold text-text-main flex items-center gap-2 mb-6 uppercase tracking-widest">
+               <Trophy className="w-4 h-4 text-gold" /> Achievements
+            </h3>
+            <div className="space-y-4">
+               {ACHIEVEMENTS.map(ach => {
+                 const earned = profile.achievements?.includes(ach.id);
+                 return (
+                   <div key={ach.id} className={`flex items-start gap-3 ${earned ? 'opacity-100' : 'opacity-40 grayscale'}`}>
+                      <div className={`p-2 rounded-xl ${ach.color}`}>
+                         <ach.icon className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-text-main">{ach.label}</p>
+                        <p className="text-[10px] text-text-muted leading-tight">{ach.desc}</p>
+                      </div>
+                   </div>
+                 );
+               })}
+            </div>
           </div>
 
           <button 
-            disabled={saving}
+            disabled={saving || usernameStatus === 'taken'}
             onClick={save}
-            className="w-full py-4 bg-amber-600 hover:bg-amber-500 text-white font-black rounded-2xl shadow-lg transition flex items-center justify-center gap-2"
+            className="w-full btn-primary-polished py-4 text-lg flex items-center justify-center gap-2"
           >
-            {saving ? 'Saving...' : <><Save className="w-5 h-5" /> Save Configuration</>}
+            {saving ? 'Syncing...' : <><Save className="w-5 h-5" /> Update Registry</>}
           </button>
         </div>
 
         {/* Right: Detailed Config */}
-        <div className="md:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-6">
           
-          <div className="bg-white p-8 rounded-[2rem] border border-stone-100 shadow-xl">
-            <div className="flex items-center gap-2 mb-6 text-stone-900">
-              <User className="w-5 h-5 text-amber-600" />
-              <h3 className="text-xl font-black">Explorer Bio</h3>
+          <div className="card-polished p-8 bg-white">
+            <div className="flex items-center gap-2 mb-8 text-text-main">
+              <User className="w-5 h-5 text-primary" />
+              <h3 className="text-xl font-bold">Identity Configuration</h3>
             </div>
-            <textarea 
-              rows={4}
-              placeholder="Tell the community about your travel style..."
-              className="w-full p-4 bg-stone-50 border border-stone-100 rounded-2xl focus:ring-2 focus:ring-amber-500 transition"
-              value={profile.bio}
-              onChange={e => setProfile(prev => ({ ...prev, bio: e.target.value }))}
-            />
+            
+            <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Unique Explorer Handle</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted font-bold">@</span>
+                    <input 
+                      placeholder="explorer_name"
+                      className={`w-full pl-8 pr-4 py-3 bg-stone-50 border rounded-xl font-bold text-text-main focus:ring-2 focus:outline-none ${
+                        usernameStatus === 'taken' ? 'border-red-300 focus:ring-red-100' : 
+                        usernameStatus === 'available' ? 'border-emerald-300 focus:ring-emerald-100' : 'border-stone-100 focus:ring-blue-100'
+                      }`}
+                      value={profile.username || ''}
+                      onChange={e => {
+                        const val = e.target.value.replace(/[^a-zA-Z0-9_]/g, '').toLowerCase();
+                        setProfile(prev => ({ ...prev, username: val }));
+                        checkUsername(val);
+                      }}
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold">
+                       {usernameStatus === 'checking' && <span className="text-blue-500">Checking...</span>}
+                       {usernameStatus === 'taken' && <span className="text-red-500">Taken</span>}
+                       {usernameStatus === 'available' && <span className="text-emerald-500">Available</span>}
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-text-muted px-2 italic">Handle must be 3-30 characters, alphanumeric or underscores.</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Explorer Bio</label>
+                  <textarea 
+                    rows={4}
+                    placeholder="Tell the community about your travel style..."
+                    className="w-full p-4 bg-stone-50 border border-stone-100 rounded-xl focus:ring-2 focus:ring-blue-100 focus:outline-none transition font-medium"
+                    value={profile.bio || ''}
+                    onChange={e => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                  />
+                </div>
+            </div>
           </div>
 
-          <div className="bg-white p-8 rounded-[2rem] border border-stone-100 shadow-xl">
-            <div className="flex items-center gap-2 mb-6 text-stone-900">
-              <Car className="w-5 h-5 text-amber-600" />
-              <h3 className="text-xl font-black">Default Vehicle</h3>
+          <div className="card-polished p-8 bg-white">
+            <div className="flex items-center gap-2 mb-6 text-text-main">
+              <Car className="w-5 h-5 text-primary" />
+              <h3 className="text-xl font-bold">Primary Expedition Vehicle</h3>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-               <div>
-                 <label className="text-xs font-black uppercase text-stone-400">Make</label>
+            <div className="grid grid-cols-2 gap-6">
+               <div className="space-y-2">
+                 <label className="text-[10px] font-bold uppercase text-text-muted">Make</label>
                  <input 
-                  className="w-full p-3 border rounded-xl"
-                  value={profile.vehicle?.make}
+                  className="w-full p-3 bg-stone-50 border border-stone-100 rounded-xl font-bold"
+                  value={profile.vehicle?.make || ''}
                   onChange={e => setProfile(prev => ({ ...prev, vehicle: { ...prev.vehicle!, make: e.target.value } }))}
                  />
                </div>
-               <div>
-                 <label className="text-xs font-black uppercase text-stone-400">Model</label>
+               <div className="space-y-2">
+                 <label className="text-[10px] font-bold uppercase text-text-muted">Model</label>
                  <input 
-                  className="w-full p-3 border rounded-xl"
-                  value={profile.vehicle?.model}
+                  className="w-full p-3 bg-stone-50 border border-stone-100 rounded-xl font-bold"
+                  value={profile.vehicle?.model || ''}
                   onChange={e => setProfile(prev => ({ ...prev, vehicle: { ...prev.vehicle!, model: e.target.value } }))}
                  />
                </div>
+            </div>
+          </div>
+          <div className="card-polished p-8 bg-white">
+            <div className="flex items-center gap-2 mb-6 text-text-main">
+              <Shield className="w-5 h-5 text-primary" />
+              <h3 className="text-xl font-bold">Mission Management</h3>
+            </div>
+            <div className="space-y-4">
+               <button 
+                 onClick={logout}
+                 className="w-full flex items-center justify-between p-4 bg-stone-50 hover:bg-stone-100 rounded-2xl transition group"
+               >
+                 <div className="flex items-center gap-3">
+                    <LogOut className="w-5 h-5 text-stone-400 group-hover:text-stone-900" />
+                    <span className="font-bold text-stone-700">Deauthorize Account</span>
+                 </div>
+                 <ChevronRight className="w-4 h-4 text-stone-300" />
+               </button>
+               <button 
+                 className="w-full flex items-center justify-between p-4 bg-red-50 hover:bg-red-100 rounded-2xl transition group"
+                 onClick={() => alert("Identity deletion requires manual override. Please contact support.")}
+               >
+                 <div className="flex items-center gap-3">
+                    <Trash2 className="w-5 h-5 text-red-400 group-hover:text-red-600" />
+                    <span className="font-bold text-red-600">Erase Presence</span>
+                 </div>
+                 <ChevronRight className="w-4 h-4 text-red-300" />
+               </button>
             </div>
           </div>
           
