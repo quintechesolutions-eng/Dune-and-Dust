@@ -20,6 +20,8 @@ export interface Logistics {
   budget: string;
   pace: string;
   detailLevel: string;
+  startingLocation: string;
+  accommodationStyles: string[];
 }
 
 export interface TripConfig {

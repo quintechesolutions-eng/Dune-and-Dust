@@ -4,7 +4,7 @@ import {
   ChevronRight, ChevronLeft, Plane, Map as MapIcon, CheckCircle2 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { NAMIBIA_REGIONS, DIETARY_OPTIONS, PACE_OPTIONS, BUDGET_OPTIONS, DETAIL_LEVELS, MONTHS, INTERESTS_CATALOG, VEHICLE_OPTIONS } from '../constants';
+import { NAMIBIA_REGIONS, DIETARY_OPTIONS, PACE_OPTIONS, BUDGET_OPTIONS, DETAIL_LEVELS, MONTHS, INTERESTS_CATALOG, VEHICLE_OPTIONS, STARTING_LOCATIONS, ACCOMMODATION_STYLES } from '../constants';
 import { TripConfig, Traveler } from '../types';
 
 interface WizardProps {
@@ -24,7 +24,9 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
       month: 'September',
       budget: 'Mid-Range (Standard Lodges, B&Bs, Glamping)',
       pace: 'Moderate (The standard balance of driving and doing)',
-      detailLevel: 'standard'
+      detailLevel: 'standard',
+      startingLocation: STARTING_LOCATIONS[0],
+      accommodationStyles: []
     }
   });
 
@@ -37,7 +39,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
     }));
   };
 
-  const next = () => setStep(s => Math.min(5, s + 1));
+  const next = () => setStep(s => Math.min(6, s + 1));
   const back = () => setStep(s => Math.max(1, s - 1));
 
   const stepVariants = {
@@ -50,12 +52,12 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
     <div className="max-w-4xl mx-auto py-12 px-4">
       {/* Progress Bar */}
       <div className="flex justify-between mb-12">
-        {[1, 2, 3, 4, 5].map(s => (
+        {[1, 2, 3, 4, 5, 6].map(s => (
           <div key={s} className="flex-1 flex items-center group">
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all border-2 ${step >= s ? 'bg-amber-600 border-amber-600 text-white' : 'bg-white border-stone-200 text-stone-400'}`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all flex-shrink-0 border-2 ${step >= s ? 'bg-amber-600 border-amber-600 text-white' : 'bg-white border-stone-200 text-stone-400'}`}>
               {s}
             </div>
-            {s < 5 && <div className={`flex-1 h-1 mx-2 ${step > s ? 'bg-amber-600' : 'bg-stone-200'}`} />}
+            {s < 6 && <div className={`flex-1 h-1 mx-2 ${step > s ? 'bg-amber-600' : 'bg-stone-200'}`} />}
           </div>
         ))}
       </div>
@@ -291,6 +293,49 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                         {BUDGET_OPTIONS.map(b => <option key={b} value={b}>{b}</option>)}
                       </select>
                     </div>
+                    <div className="md:col-span-2 space-y-4">
+                      <label className="text-xs font-black uppercase text-stone-400">Starting Location</label>
+                      <select 
+                        className="w-full p-4 border rounded-xl font-bold"
+                        value={config.logistics.startingLocation}
+                        onChange={e => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, startingLocation: e.target.value } }))}
+                      >
+                        {STARTING_LOCATIONS.map(l => <option key={l} value={l}>{l}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {step === 6 && (
+                <div>
+                  <h2 className="text-3xl font-black mb-2">The Stay</h2>
+                  <p className="text-stone-500 mb-8">What type of homes or camps fit your vision?</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {ACCOMMODATION_STYLES.map(style => (
+                      <div 
+                        key={style.id}
+                        onClick={() => setConfig(prev => ({
+                          ...prev,
+                          logistics: {
+                            ...prev.logistics,
+                            accommodationStyles: prev.logistics.accommodationStyles.includes(style.name)
+                              ? prev.logistics.accommodationStyles.filter(s => s !== style.name)
+                              : [...prev.logistics.accommodationStyles, style.name]
+                          }
+                        }))}
+                        className={`relative h-48 rounded-[2rem] overflow-hidden cursor-pointer group transition-all border-4 ${config.logistics.accommodationStyles.includes(style.name) ? 'border-primary shadow-xl ring-4 ring-blue-50' : 'border-white shadow-sm hover:shadow-md'}`}
+                      >
+                        <img src={style.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110" alt={style.name} referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/accommodation/800/600'; }} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/40 to-transparent flex flex-col justify-end p-6">
+                           <h3 className="text-xl font-black text-white">{style.name}</h3>
+                           <p className="text-stone-300 text-xs font-medium leading-relaxed">{style.desc}</p>
+                        </div>
+                        {config.logistics.accommodationStyles.includes(style.name) && (
+                          <div className="absolute top-4 right-4 bg-primary p-2 rounded-full shadow-lg"><CheckCircle2 className="w-4 h-4 text-white" /></div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -306,7 +351,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
           >
             <ChevronLeft /> Back
           </button>
-          {step < 5 ? (
+          {step < 6 ? (
             <button 
               onClick={next}
               className="px-8 py-3 bg-primary text-white rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 transition shadow-lg shadow-blue-500/20"

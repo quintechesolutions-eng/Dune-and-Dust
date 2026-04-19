@@ -23,6 +23,26 @@ export const DETAIL_LEVELS = [
   { id: 'insane', name: 'Insane Deep-Dive', desc: 'Minute-by-minute scheduling, extensive history, exact packing.' }
 ];
 
+export const STARTING_LOCATIONS = [
+  'Windhoek (Hosea Kutako International Airport)',
+  'Windhoek (City Center)',
+  'Swakopmund',
+  'Walvis Bay (Airport)',
+  'Katima Mulilo (Caprivi)',
+  'Rundu',
+  'Keetmanshoop',
+  'Lüderitz',
+  'Ondangwa'
+];
+
+export const ACCOMMODATION_STYLES = [
+  { id: 'luxury_lodge', name: 'Luxury Safari Lodges', image: 'https://images.unsplash.com/photo-1518544801976-3e159e50e5bb?auto=format&fit=crop&w=800&q=80', desc: 'Premium services, fine dining, and guided drives.' },
+  { id: 'guest_farm', name: 'Private Guest Farms', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=800&q=80', desc: 'Authentic Namibian farm stays with home-cooked meals.' },
+  { id: 'airbnb_self_catering', name: 'Airbnb & Self-Catering', image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80', desc: 'Independent villas, townhouses, or remote cabins.' },
+  { id: 'glamping', name: 'Boutique Glamping', image: 'https://images.unsplash.com/photo-1504280390227-361cffbcceed?auto=format&fit=crop&w=800&q=80', desc: 'Canvas tents with en-suite bathrooms and real beds.' },
+  { id: 'rooftop_camping', name: 'Rooftop Tents / Camping', image: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=800&q=80', desc: 'Rugged freedom under the stars with your 4x4.' }
+];
+
 export const BUDGET_OPTIONS = [
   'Ultra-Shoestring (Hitchhiking & Wild Camping)',
   'Budget (Campsites & Backpackers)',

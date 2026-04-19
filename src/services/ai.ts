@@ -79,9 +79,10 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     *CRITICAL: Provide specific fuel stop advice based on a ${config.vehicle.fuelType} vehicle driving in Namibia.*
     
     Trip Logistics:
+    - Starting Location / Airport: ${config.logistics.startingLocation}
     - Days: ${config.logistics.days}
     - Month: ${config.logistics.month}
-    - Budget: ${config.logistics.budget}
+    - Lodging/Accommodation Scope: ${config.logistics.accommodationStyles.length > 0 ? config.logistics.accommodationStyles.join(', ') : config.logistics.budget}
     - Pace: ${config.logistics.pace}
     - Detail Level Required: ${config.logistics.detailLevel.toUpperCase()}
     
@@ -90,9 +91,10 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
 
     INSTRUCTIONS:
     1. Base all activities predominantly on the selected regions and specific interests.
-    2. Adjust the length and verbosity of the descriptions based on the "Detail Level Required".
-    3. Account for realistic driving times for the specific vehicle type.
-    4. Provide lodge names that fit the exact budget.
+    2. Start the itinerary strictly from the requested 'Starting Location' and logically route them from there.
+    3. Adjust the length and verbosity of the descriptions based on the "Detail Level Required".
+    4. Account for realistic driving times for the specific vehicle type in Namibia.
+    5. Provide lodging types or names (Booking.com/Airbnb queries) that fit the explicitly requested 'Accommodation Scope' and budget.
   `;
 
   const response = await ai.models.generateContent({
