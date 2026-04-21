@@ -89,7 +89,7 @@ service cloud.firestore {
           && incoming().createdAt == existing().createdAt)
         || (isSignedIn() && incoming().diff(existing()).affectedKeys().hasOnly(['likes'])); // Allow liking via transaction
 
-      allow delete: if isSignedIn() && request.auth.uid == existing().userId;
+      allow delete: if isSignedIn() && request.auth.uid == resource.data.userId;
 
       // --- Likes Subcollection ---
       match /likes/{userId} {

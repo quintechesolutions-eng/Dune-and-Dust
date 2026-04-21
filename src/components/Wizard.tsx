@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MapPin, Users, Car, Heart, Settings, Plus, Trash2, Fuel, 
   ChevronRight, ChevronLeft, Plane, Map as MapIcon, CheckCircle2 
@@ -11,6 +11,64 @@ interface WizardProps {
   onGenerate: (config: TripConfig) => void;
   isLoading: boolean;
 }
+
+const RegionDetailsPanel = ({ isSelected }: { isSelected: string[] }) => {
+  const [hoveredRegion, setHoveredRegion] = useState<any | null>(null);
+
+  useEffect(() => {
+    const handleRegionHover = (e: any) => {
+      setHoveredRegion(e.detail);
+    };
+
+    window.addEventListener('regionHover', handleRegionHover);
+    return () => window.removeEventListener('regionHover', handleRegionHover);
+  }, []);
+
+  return (
+    <div className="bg-stone-50 rounded-[3rem] p-8 border border-stone-100 flex-1 flex flex-col relative overflow-hidden h-full min-h-[300px]">
+      <AnimatePresence mode="wait">
+        {hoveredRegion ? (
+          <motion.div 
+            key={hoveredRegion.id}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col h-full"
+          >
+            <div className="h-48 w-full rounded-2xl overflow-hidden mb-6 relative shrink-0 shadow-lg">
+               <img src={hoveredRegion.image} className="w-full h-full object-cover" alt={hoveredRegion.name} referrerPolicy="no-referrer" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
+                  <h3 className="text-white font-black text-3xl leading-none drop-shadow-md">{hoveredRegion.name}</h3>
+               </div>
+            </div>
+            <p className="text-stone-600 font-medium text-lg leading-relaxed mb-4">{hoveredRegion.desc}</p>
+            
+            {isSelected.includes(hoveredRegion.id) ? (
+               <div className="mt-auto inline-flex items-center gap-2 text-primary font-black bg-white px-4 py-2 w-max rounded-full shadow-sm">
+                  <CheckCircle2 className="w-5 h-5" /> Added to Horizon
+               </div>
+            ) : (
+               <div className="mt-auto inline-flex items-center gap-2 text-stone-400 font-bold">
+                  Click to add to your expedition
+               </div>
+            )}
+          </motion.div>
+        ) : (
+          <motion.div 
+            key="empty"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="text-stone-400 italic font-bold h-full flex flex-col items-center justify-center text-center p-8 border-2 border-dashed border-stone-200 rounded-3xl w-full"
+          >
+             <MapPin className="w-12 h-12 mb-4 text-stone-300 opacity-50" />
+             Hover over the map zones to preview regions.<br/>Click to plot them on your horizon.
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
   const [step, setStep] = useState(1);
@@ -74,29 +132,81 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
               transition={{ duration: 0.3 }}
             >
               {step === 1 && (
-                <div>
-                  <h2 className="text-3xl font-black mb-2">The Canvas</h2>
-                  <p className="text-stone-500 mb-8">Where in Namibia is calling you?</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {NAMIBIA_REGIONS.map(r => (
-                      <div 
-                        key={r.id}
-                        onClick={() => toggleRegion(r.id)}
-                        className={`relative h-56 rounded-[2rem] overflow-hidden cursor-pointer group transition-all border-4 ${config.selectedRegions.includes(r.id) ? 'border-primary shadow-xl ring-4 ring-blue-50' : 'border-white shadow-sm hover:shadow-md'}`}
-                      >
-                        <img src={r.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110" alt={r.name} referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/namibiasafari/800/600'; }} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/40 to-transparent flex flex-col justify-end p-8">
-                          <div className="flex items-center gap-3 mb-2">
-                             <r.icon className="w-5 h-5 text-primary" />
-                             <h3 className="text-2xl font-black text-white">{r.name}</h3>
+                <div className="flex flex-col lg:flex-row gap-8">
+                  <div className="lg:w-1/2 flex flex-col">
+                    <h2 className="text-3xl font-black mb-2">The Canvas</h2>
+                    <p className="text-stone-500 mb-8">Click areas on the map to plot your journey.</p>
+                    
+                    <div className="relative w-full aspect-[4/5] bg-[#E8E6E1] rounded-[3rem] shadow-inner border border-stone-200 overflow-hidden flex-1 group">
+                      {/* Decorative grid */}
+                      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                      
+                      {/* Map abstract base shape (Namibia approx) */}
+                      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
+                         <path d="M 25 10 L 60 10 L 60 5 L 95 5 L 95 10 L 60 10 L 65 30 L 70 50 L 70 70 L 90 70 L 85 95 L 50 95 L 45 85 L 50 75 L 30 65 L 10 40 L 15 20 Z" fill="#000" />
+                      </svg>
+
+                      {NAMIBIA_REGIONS.map(r => {
+                        const spotStyles: Record<string, { top: string; left: string; width: string; height: string; color: string }> = {
+                          'caprivi': { top: '8%', left: '70%', width: '25%', height: '10%', color: 'bg-green-400' },
+                          'etosha': { top: '18%', left: '40%', width: '25%', height: '18%', color: 'bg-emerald-400' },
+                          'skeleton_coast': { top: '25%', left: '12%', width: '15%', height: '35%', color: 'bg-cyan-400' },
+                          'damaraland': { top: '35%', left: '25%', width: '20%', height: '20%', color: 'bg-orange-400' },
+                          'swakopmund': { top: '55%', left: '12%', width: '15%', height: '15%', color: 'bg-blue-400' },
+                          'kalahari': { top: '50%', left: '60%', width: '30%', height: '35%', color: 'bg-yellow-400' },
+                          'sossusvlei': { top: '70%', left: '25%', width: '25%', height: '20%', color: 'bg-red-400' },
+                          'fish_river': { top: '85%', left: '45%', width: '20%', height: '15%', color: 'bg-amber-600' },
+                          'namib_rand': { top: '78%', left: '30%', width: '15%', height: '15%', color: 'bg-orange-500' },
+                          'kunene': { top: '8%', left: '25%', width: '20%', height: '12%', color: 'bg-teal-500' },
+                          'waterberg': { top: '30%', left: '45%', width: '15%', height: '12%', color: 'bg-rose-400' },
+                          'khaudum': { top: '15%', left: '60%', width: '15%', height: '15%', color: 'bg-lime-500' },
+                          'luderitz': { top: '75%', left: '15%', width: '10%', height: '10%', color: 'bg-indigo-400' }
+                        };
+                        const spot = spotStyles[r.id];
+                        if (!spot) return null;
+
+                        const isSelected = config.selectedRegions.includes(r.id);
+
+                        return (
+                          <div 
+                            key={r.id}
+                            className={`absolute transition-all duration-500 cursor-pointer -translate-x-1/2 -translate-y-1/2 flex items-center justify-center border-4 ${isSelected ? `border-white scale-110 shadow-2xl z-20 ${spot.color}` : `${spot.color} bg-opacity-40 border-transparent hover:bg-opacity-80 hover:scale-105 shadow-md z-10`}`}
+                            style={{ 
+                              top: spot.top, left: spot.left, width: spot.width, height: spot.height,
+                              animation: `blob ${3 + Math.random() * 2}s infinite alternate` 
+                            }}
+                            onClick={() => toggleRegion(r.id)}
+                            onMouseEnter={() => {
+                               // Dispatch a custom event to update the description area
+                               const event = new CustomEvent('regionHover', { detail: r });
+                               window.dispatchEvent(event);
+                            }}
+                            onMouseLeave={() => {
+                               const event = new CustomEvent('regionHover', { detail: null });
+                               window.dispatchEvent(event);
+                            }}
+                          >
+                             {isSelected && <CheckCircle2 className="text-white w-6 h-6 absolute" />}
                           </div>
-                          <p className="text-stone-300 text-sm font-medium leading-relaxed">{r.desc}</p>
-                        </div>
-                        {config.selectedRegions.includes(r.id) && (
-                          <div className="absolute top-6 right-6 bg-primary p-2 rounded-full shadow-lg"><CheckCircle2 className="w-5 h-5 text-white" /></div>
-                        )}
-                      </div>
-                    ))}
+                        )
+                      })}
+                    </div>
+                  </div>
+                  
+                  <div className="lg:w-1/2 flex flex-col">
+                     <RegionDetailsPanel isSelected={config.selectedRegions} />
+                     <div className="mt-8">
+                       <h4 className="text-sm font-black text-stone-400 uppercase tracking-widest mb-4">Selected Waypoints</h4>
+                       <div className="flex flex-wrap gap-2 min-h-[40px]">
+                         {config.selectedRegions.length === 0 ? <span className="text-stone-400 text-sm font-bold">None selected yet.</span> : null}
+                         {NAMIBIA_REGIONS.filter(r => config.selectedRegions.includes(r.id)).map(r => (
+                           <span key={r.id} className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-primary/20">
+                             {r.name}
+                             <button onClick={() => toggleRegion(r.id)} className="hover:bg-white/20 p-1 rounded-full"><Trash2 className="w-3 h-3" /></button>
+                           </span>
+                         ))}
+                       </div>
+                     </div>
                   </div>
                 </div>
               )}

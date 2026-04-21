@@ -10,14 +10,19 @@ interface NavigationProps {
 
 export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) => {
   const [user] = useAuthState(auth);
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('standard');
 
+  const themes = ['standard', 'sunset', 'forest', 'ocean', 'desert'];
+  
   const cycleTheme = () => {
-    const themes = ['light', 'sunset', 'forest'];
     const nextIndex = (themes.indexOf(theme) + 1) % themes.length;
     const nextTheme = themes[nextIndex];
     setTheme(nextTheme);
-    document.documentElement.setAttribute('data-theme', nextTheme);
+    if(nextTheme === 'standard') {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', nextTheme);
+    }
   };
 
   return (
@@ -56,8 +61,8 @@ export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) =>
 
           {user ? (
             <div className="flex items-center gap-3 pl-4 border-l border-border-subtle">
-              <button onClick={cycleTheme} className="text-stone-400 hover:text-stone-900 transition p-1" title="Cycle Theme">
-                <Palette className="w-5 h-5" />
+              <button onClick={cycleTheme} className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400 hover:text-primary transition py-1 px-2 rounded-lg hover:bg-stone-100" title="Cycle Theme">
+                <Palette className="w-4 h-4" /> <span className="hidden md:inline">{theme}</span>
               </button>
               <img 
                 src={user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user.displayName}`} 
@@ -77,8 +82,8 @@ export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) =>
             </div>
           ) : (
             <div className="flex items-center gap-2 pl-4 border-l border-border-subtle">
-               <button onClick={cycleTheme} className="text-stone-400 hover:text-stone-900 transition p-1 mr-2" title="Cycle Theme">
-                 <Palette className="w-5 h-5" />
+               <button onClick={cycleTheme} className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400 hover:text-primary transition py-1 px-2 rounded-lg hover:bg-stone-100 mr-2" title="Cycle Theme">
+                 <Palette className="w-4 h-4" /> <span className="hidden md:inline">{theme}</span>
                </button>
                <button 
                   onClick={signInWithGoogle}

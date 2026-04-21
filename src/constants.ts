@@ -8,11 +8,16 @@ export const NAMIBIA_REGIONS = [
   { id: 'etosha', name: 'Etosha National Park', desc: 'Premier wildlife viewing around massive salt pans', icon: Bird, color: 'bg-emerald-100 text-emerald-800 border-emerald-300', image: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=1200&q=80' },
   { id: 'damaraland', name: 'Damaraland', desc: 'Desert-adapted elephants, rhinos, and ancient rock art', icon: Mountain, color: 'bg-orange-100 text-orange-800 border-orange-300', image: 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&w=1200&q=80' },
   { id: 'skeleton_coast', name: 'Skeleton Coast', desc: 'Shipwrecks, roaring dunes, and desolate shorelines', icon: Waves, color: 'bg-cyan-100 text-cyan-800 border-cyan-300', image: 'https://images.unsplash.com/photo-1520188740392-672bef2247fb?auto=format&fit=crop&w=1200&q=80' },
-  { id: 'swakopmund', name: 'Swakopmund & Walvis Bay', desc: 'Adventure capital, flamingos, and colonial charm', icon: Palmtree, color: 'bg-blue-100 text-blue-800 border-blue-300', image: 'https://images.unsplash.com/photo-1588668214407-6ea9a6d8c272?auto=format&fit=crop&w=1200&q=80' },
-  { id: 'sossusvlei', name: 'Sossusvlei & Deadvlei', desc: 'Towering red dunes and iconic dead tree valleys', icon: Sun, color: 'bg-red-100 text-red-800 border-red-300', image: 'https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'swakopmund', name: 'Swakopmund & Walvis Bay', desc: 'Adventure capital, flamingos, and colonial charm', icon: Palmtree, color: 'bg-blue-100 text-blue-800 border-blue-300', image: 'https://images.unsplash.com/photo-1620959086708-3729e2402e1b?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'sossusvlei', name: 'Sossusvlei & Deadvlei', desc: 'Towering red dunes and iconic dead tree valleys', icon: Sun, color: 'bg-red-100 text-red-800 border-red-300', image: 'https://images.unsplash.com/photo-1506558235281-28dc12eaec5a?auto=format&fit=crop&w=1200&q=80' },
   { id: 'fish_river', name: 'Fish River Canyon', desc: 'The second largest canyon in the world', icon: MapPin, color: 'bg-amber-100 text-amber-800 border-amber-300', image: 'https://images.unsplash.com/photo-1515281239448-2abee61db1d7?auto=format&fit=crop&w=1200&q=80' },
-  { id: 'caprivi', name: 'Zambezi Region (Caprivi)', desc: 'Lush wetlands, hippos, crocodiles and river safaris', icon: Tent, color: 'bg-green-100 text-green-800 border-green-300', image: 'https://images.unsplash.com/photo-1510312305653-8ed496efae75?auto=format&fit=crop&w=1200&q=80' },
-  { id: 'kalahari', name: 'Kalahari Desert', desc: 'Red sands, meerkats, and Bushman culture', icon: Sun, color: 'bg-yellow-100 text-yellow-800 border-yellow-300', image: 'https://images.unsplash.com/photo-1496080174650-637e3f22fa03?auto=format&fit=crop&w=1200&q=80' }
+  { id: 'caprivi', name: 'Zambezi Region (Caprivi)', desc: 'Lush wetlands, hippos, crocodiles and river safaris', icon: Tent, color: 'bg-green-100 text-green-800 border-green-300', image: 'https://images.unsplash.com/photo-1521651475513-e45eb97a1599?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'kalahari', name: 'Kalahari Desert', desc: 'Red sands, meerkats, and Bushman culture', icon: Sun, color: 'bg-yellow-100 text-yellow-800 border-yellow-300', image: 'https://images.unsplash.com/photo-1496080174650-637e3f22fa03?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'namib_rand', name: 'NamibRand Nature Reserve', desc: 'Dark sky reserves, fairy circles, and expansive plains', icon: Sun, color: 'bg-yellow-100 text-yellow-800 border-yellow-300', image: 'https://images.unsplash.com/photo-1473116763249-2faaef81ccda?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'kunene', name: 'Kunene & Epupa Falls', desc: 'Remote waterfalls and Himba tribal culture', icon: Waves, color: 'bg-blue-100 text-blue-800 border-blue-300', image: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'waterberg', name: 'Waterberg Plateau', desc: 'Table mountain landscape and rare rhino conservation', icon: Mountain, color: 'bg-orange-100 text-orange-800 border-orange-300', image: 'https://images.unsplash.com/photo-1616823395982-1e967a92fb4a?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'khaudum', name: 'Khaudum National Park', desc: 'True wilderness, deep sand 4x4 trails, and huge elephant herds', icon: Mountain, color: 'bg-yellow-100 text-yellow-800 border-yellow-300', image: 'https://images.unsplash.com/photo-1523805009345-7448845a9e53?auto=format&fit=crop&w=1200&q=80' },
+  { id: 'luderitz', name: 'Lüderitz & Kolmanskop', desc: 'Ghost towns buried in sand and rugged windy coasts', icon: Palmtree, color: 'bg-cyan-100 text-cyan-800 border-cyan-300', image: 'https://images.unsplash.com/photo-1627918451834-c2edccfc4eb4?auto=format&fit=crop&w=1200&q=80' }
 ];
 
 export const DIETARY_OPTIONS = [
@@ -112,7 +117,31 @@ export const INTERESTS_CATALOG = [
   // KALAHARI
   { region: 'kalahari', category: 'Culture', label: 'San Bushmen Guided Walk' },
   { region: 'kalahari', category: 'Wildlife', label: 'Meerkat Encounter' },
-  { region: 'kalahari', category: 'Nature', label: 'Red Dune Sundowner Drive' }
+  { region: 'kalahari', category: 'Nature', label: 'Red Dune Sundowner Drive' },
+
+  // NAMIB RAND
+  { region: 'namib_rand', category: 'Action', label: 'Fat Bike Dune Cycling' },
+  { region: 'namib_rand', category: 'Nature', label: 'Dark Sky Stargazing Safari' },
+  { region: 'namib_rand', category: 'Nature', label: 'Fairy Circle Guided Tour' },
+
+  // KUNENE / EPUPA
+  { region: 'kunene', category: 'Culture', label: 'Himba Village Authentic Visit' },
+  { region: 'kunene', category: 'Nature', label: 'Epupa Falls Hike' },
+  { region: 'kunene', category: 'Adventure', label: 'White Water Rafting (Seasonal)' },
+
+  // WATERBERG
+  { region: 'waterberg', category: 'Wildlife', label: 'Rare Rhino Tracking' },
+  { region: 'waterberg', category: 'Adventure', label: 'Plateau Multi-Day Hike' },
+  { region: 'waterberg', category: 'History', label: 'Herero War Battle Sites' },
+
+  // KHAUDUM
+  { region: 'khaudum', category: 'Adventure', label: 'Deep Sand 4x4 Expedition' },
+  { region: 'khaudum', category: 'Wildlife', label: 'Wild Dog Spotting' },
+
+  // LUDERITZ
+  { region: 'luderitz', category: 'Photography', label: 'Kolmanskop Ghost Town Tour' },
+  { region: 'luderitz', category: 'Nature', label: 'Diaz Point & Penguin Island' },
+  { region: 'luderitz', category: 'Culture', label: 'Oyster Tasting & Harbor Tour' }
 ];
 
 export const LOADING_FACTS = [

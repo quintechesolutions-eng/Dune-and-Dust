@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+@keyframes blob {
+  0% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+  33% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  66% { border-radius: 30% 70% 70% 30% / 30% 70% 30% 70%; }
+  100% { border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%; }
+}
+
 @theme {
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
@@ -46,6 +53,28 @@
     --theme-border-subtle: #dcfce7;
     --theme-success: #10b981;
     --theme-gold: #fbbf24;
+  }
+
+  :root[data-theme="ocean"] {
+    --theme-bg-main: #f0f9ff;
+    --theme-bg-card: #ffffff;
+    --theme-primary: #0284c7;
+    --theme-text-main: #0c4a6e;
+    --theme-text-muted: #0369a1;
+    --theme-border-subtle: #e0f2fe;
+    --theme-success: #059669;
+    --theme-gold: #eab308;
+  }
+
+  :root[data-theme="desert"] {
+    --theme-bg-main: #fefce8;
+    --theme-bg-card: #ffffff;
+    --theme-primary: #a16207;
+    --theme-text-main: #422006;
+    --theme-text-muted: #854d0e;
+    --theme-border-subtle: #fef08a;
+    --theme-success: #65a30d;
+    --theme-gold: #d97706;
   }
 
   body {
