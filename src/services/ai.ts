@@ -23,9 +23,20 @@ const outputSchema = {
       properties: {
         packingList: { type: Type.ARRAY, items: { type: Type.STRING } },
         fuelAdvice: { type: Type.STRING, description: "Specific advice regarding fuel stations for the specific vehicle and fuel type. e.g. How often to fuel a hybrid or charge an EV." },
-        estimatedBudgetTotalUSD: { type: Type.INTEGER }
+        transportBookingQuery: { type: Type.STRING, description: "A Google search query to find rental cars for this specific vehicle type, e.g. '4x4 Double Cab rental Windhoek'" },
+        estimatedBudgetTotalUSD: { type: Type.INTEGER },
+        budgetAllocation: {
+          type: Type.OBJECT,
+          properties: {
+            accommodation: { type: Type.INTEGER, description: "Estimated cost for all accommodations/lodging" },
+            transportation: { type: Type.INTEGER, description: "Estimated cost for vehicle specific fuel/rental/flights" },
+            food: { type: Type.INTEGER, description: "Estimated cost for all food and dining" },
+            activities: { type: Type.INTEGER, description: "Estimated cost for activities/park fees" }
+          },
+          required: ["accommodation", "transportation", "food", "activities"]
+        }
       },
-      required: ["packingList", "fuelAdvice", "estimatedBudgetTotalUSD"]
+      required: ["packingList", "fuelAdvice", "transportBookingQuery", "estimatedBudgetTotalUSD", "budgetAllocation"]
     },
     dailyPlan: {
       type: Type.ARRAY,
@@ -34,6 +45,8 @@ const outputSchema = {
         properties: {
           day: { type: Type.INTEGER },
           location: { type: Type.STRING },
+          latitude: { type: Type.NUMBER, description: "Accurate latitude for the specific location/lodge" },
+          longitude: { type: Type.NUMBER, description: "Accurate longitude for the specific location/lodge" },
           driveTimeHours: { type: Type.STRING },
           roadConditions: { type: Type.STRING, description: "E.g., Tarred, heavy corrugation, deep sand, requires 4x4 engagement." },
           fuelStopRecommendations: { type: Type.STRING },
@@ -60,7 +73,7 @@ const outputSchema = {
             required: ["name", "type", "bookingSearchQuery", "features"]
           }
         },
-        required: ["day", "location", "driveTimeHours", "roadConditions", "fuelStopRecommendations", "description", "activities", "meals", "accommodation"]
+        required: ["day", "location", "latitude", "longitude", "driveTimeHours", "roadConditions", "fuelStopRecommendations", "description", "activities", "meals", "accommodation"]
       }
     }
   },
@@ -90,11 +103,13 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     Specific Interests Requested: ${config.selectedInterests.join(', ')}.
 
     INSTRUCTIONS:
-    1. Base all activities predominantly on the selected regions and specific interests.
+    1. Base all activities predominantly on the selected regions and specific interests. OVER-DELIVER on activities by listing at least 3-4 highly detailed activities per day.
     2. Start the itinerary strictly from the requested 'Starting Location' and logically route them from there.
     3. Adjust the length and verbosity of the descriptions based on the "Detail Level Required".
     4. Account for realistic driving times for the specific vehicle type in Namibia.
-    5. Provide lodging types or names (Booking.com/Airbnb queries) that fit the explicitly requested 'Accommodation Scope' and budget.
+    5. Provide lodging types or names (Booking.com/Airbnb queries) that fit the explicitly requested 'Accommodation Scope' and budget. Ensure 'bookingSearchQuery' is accurate to finding it on Booking.com.
+    6. Ensure 'transportBookingQuery' (under logistics) is an accurate search query for finding rental cars for the user's specific vehicle type (e.g. '4x4 Double Cab Campervan Rental Windhoek').
+    7. ACCURATE COORDINATES: You MUST provide an accurate 'latitude' and 'longitude' mapping to a real place for EVERY SINGLE stop/lodge in the dailyPlan so it can be rendered on a 3D Mapping engine.
   `;
 
   const response = await ai.models.generateContent({

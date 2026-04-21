@@ -109,55 +109,70 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     {config.travelers.map((t, idx) => (
                       <div key={t.id} className="p-6 bg-stone-50 rounded-2xl relative border border-stone-200">
                         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                          <input 
-                            placeholder="Name" 
-                            className="p-3 border rounded-xl"
-                            value={t.name || ''}
-                            onChange={e => setConfig(prev => ({
-                              ...prev,
-                              travelers: prev.travelers.map(tr => tr.id === t.id ? { ...tr, name: e.target.value } : tr)
-                            }))}
-                          />
-                          <input 
-                            type="number" 
-                            placeholder="Age" 
-                            className="p-3 border rounded-xl"
-                            value={t.age || ''}
-                            onChange={e => setConfig(prev => ({
-                              ...prev,
-                              travelers: prev.travelers.map(tr => tr.id === t.id ? { ...tr, age: Number(e.target.value) } : tr)
-                            }))}
-                          />
-                          <input 
-                            type="number" 
-                            placeholder="Budget P/P (USD)" 
-                            className="p-3 border rounded-xl"
-                            value={t.budgetUsd || ''}
-                            onChange={e => setConfig(prev => ({
-                              ...prev,
-                              travelers: prev.travelers.map(tr => tr.id === t.id ? { ...tr, budgetUsd: Number(e.target.value) } : tr)
-                            }))}
-                          />
-                          <select 
-                            className="p-3 border rounded-xl"
-                            value={t.dietary || ''}
-                            onChange={e => setConfig(prev => ({
-                              ...prev,
-                              travelers: prev.travelers.map(tr => tr.id === t.id ? { ...tr, dietary: e.target.value } : tr)
-                            }))}
-                          >
-                            {DIETARY_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
-                          </select>
-                          <div className="flex items-center gap-2 px-3 bg-white border rounded-xl">
+                          <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-black text-stone-400 pl-1">Explorer Name</label>
                             <input 
-                              type="checkbox" 
-                              checked={t.hasLicense}
+                              placeholder="Name" 
+                              className="w-full p-3 border rounded-xl"
+                              value={t.name || ''}
                               onChange={e => setConfig(prev => ({
                                 ...prev,
-                                travelers: prev.travelers.map(tr => tr.id === t.id ? { ...tr, hasLicense: e.target.checked } : tr)
+                                travelers: prev.travelers.map(tr => tr.id === t.id ? { ...tr, name: e.target.value } : tr)
                               }))}
                             />
-                            <span className="text-sm font-bold text-stone-600">Driver</span>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-black text-stone-400 pl-1">Age</label>
+                            <input 
+                              type="number" 
+                              placeholder="Age" 
+                              className="w-full p-3 border rounded-xl"
+                              value={t.age || ''}
+                              onChange={e => setConfig(prev => ({
+                                ...prev,
+                                travelers: prev.travelers.map(tr => tr.id === t.id ? { ...tr, age: Number(e.target.value) } : tr)
+                              }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-black text-stone-400 pl-1">Budget ($USD)</label>
+                            <input 
+                              type="number" 
+                              placeholder="Budget P/P (USD)" 
+                              className="w-full p-3 border rounded-xl"
+                              value={t.budgetUsd || ''}
+                              onChange={e => setConfig(prev => ({
+                                ...prev,
+                                travelers: prev.travelers.map(tr => tr.id === t.id ? { ...tr, budgetUsd: Number(e.target.value) } : tr)
+                              }))}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-black text-stone-400 pl-1">Dietary Requirement</label>
+                            <select 
+                              className="w-full p-3 border rounded-xl"
+                              value={t.dietary || ''}
+                              onChange={e => setConfig(prev => ({
+                                ...prev,
+                                travelers: prev.travelers.map(tr => tr.id === t.id ? { ...tr, dietary: e.target.value } : tr)
+                              }))}
+                            >
+                              {DIETARY_OPTIONS.map(d => <option key={d} value={d}>{d}</option>)}
+                            </select>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-black text-stone-400 pl-1">Can Drive?</label>
+                            <div className="flex h-[50px] items-center gap-2 px-3 bg-white border rounded-xl">
+                              <input 
+                                type="checkbox" 
+                                checked={t.hasLicense}
+                                onChange={e => setConfig(prev => ({
+                                  ...prev,
+                                  travelers: prev.travelers.map(tr => tr.id === t.id ? { ...tr, hasLicense: e.target.checked } : tr)
+                                }))}
+                              />
+                              <span className="text-sm font-bold text-stone-600">Driver</span>
+                            </div>
                           </div>
                         </div>
                         {config.travelers.length > 1 && (
@@ -187,7 +202,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                 <div>
                   <h2 className="text-3xl font-black mb-2">The Wheels</h2>
                   <p className="text-stone-500 mb-8">What are we driving across the dunes?</p>
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {VEHICLE_OPTIONS.map(v => (
                       <div 
                         key={v.id}
@@ -195,21 +210,19 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                           ...prev, 
                           vehicle: { make: v.name, model: '', drivetrain: v.drivetain, fuelType: v.fuel } 
                         }))}
-                        className={`p-6 rounded-2xl border-2 transition-all cursor-pointer ${
-                          config.vehicle.make === v.name
-                            ? 'border-primary bg-blue-50'
-                            : 'border-stone-100 hover:border-blue-200'
-                        }`}
+                        className={`relative h-48 rounded-[2rem] overflow-hidden cursor-pointer group transition-all border-4 ${config.vehicle.make === v.name ? 'border-primary shadow-xl ring-4 ring-blue-50' : 'border-white shadow-sm hover:shadow-md'}`}
                       >
-                         <div className="flex justify-between items-start">
-                            <div>
-                               <h4 className="font-black text-stone-900">{v.name}</h4>
-                               <p className="text-stone-500 text-sm">{v.desc}</p>
-                            </div>
-                            <div className="text-right">
-                               <p className="text-[10px] font-black uppercase text-stone-400">{v.drivetain} • {v.fuel}</p>
-                            </div>
-                         </div>
+                        <img src={v.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110" alt={v.name} referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/vehicle/800/600'; }} />
+                        <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/40 to-transparent flex flex-col justify-end p-6">
+                           <h4 className="font-black text-white text-lg">{v.name}</h4>
+                           <p className="text-stone-300 text-xs font-medium mb-1">{v.desc}</p>
+                           <span className="inline-block px-2 py-1 bg-stone-800/80 rounded text-[10px] font-black uppercase text-stone-200 mt-2 w-max">
+                             {v.drivetain} • {v.fuel}
+                           </span>
+                        </div>
+                        {config.vehicle.make === v.name && (
+                          <div className="absolute top-4 right-4 bg-primary p-2 rounded-full shadow-lg"><CheckCircle2 className="w-4 h-4 text-white" /></div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -220,26 +233,34 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                 <div>
                   <h2 className="text-3xl font-black mb-2">The Soul</h2>
                   <p className="text-stone-500 mb-8">Select your hyper-specific safari interests.</p>
-                  <div className="flex flex-wrap gap-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                    {INTERESTS_CATALOG.filter(i => config.selectedRegions.includes(i.region)).map(interest => (
-                      <button
-                        key={interest.label}
-                        onClick={() => setConfig(prev => ({
-                          ...prev,
-                          selectedInterests: prev.selectedInterests.includes(interest.label)
-                            ? prev.selectedInterests.filter(i => i !== interest.label)
-                            : [...prev.selectedInterests, interest.label]
-                        }))}
-                        className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
-                          config.selectedInterests.includes(interest.label)
-                            ? 'bg-amber-600 border-amber-600 text-white shadow-lg'
-                            : 'bg-white border-stone-100 text-stone-600 hover:border-amber-200'
-                        }`}
-                      >
-                        {interest.label}
-                      </button>
-                    ))}
-                  </div>
+                  
+                  {config.selectedRegions.length === 0 ? (
+                    <div className="bg-stone-50 border-2 border-dashed border-stone-200 rounded-2xl p-8 text-center">
+                      <p className="text-stone-500 font-bold mb-2">No regions selected.</p>
+                      <p className="text-stone-400 text-sm">Return to Step 1 (The Horizon) and select at least one destination to see available activities.</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                      {INTERESTS_CATALOG.filter(i => config.selectedRegions.includes(i.region)).map(interest => (
+                        <button
+                          key={interest.label}
+                          onClick={() => setConfig(prev => ({
+                            ...prev,
+                            selectedInterests: prev.selectedInterests.includes(interest.label)
+                              ? prev.selectedInterests.filter(i => i !== interest.label)
+                              : [...prev.selectedInterests, interest.label]
+                          }))}
+                          className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                            config.selectedInterests.includes(interest.label)
+                              ? 'bg-amber-600 border-amber-600 text-white shadow-lg'
+                              : 'bg-white border-stone-100 text-stone-600 hover:border-amber-200'
+                          }`}
+                        >
+                          {interest.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -247,6 +268,35 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                 <div>
                   <h2 className="text-3xl font-black mb-2">Logistics</h2>
                   <p className="text-stone-500 mb-8">Final structural details.</p>
+                  
+                  {(() => {
+                    const totalBudget = config.travelers.reduce((acc, t) => acc + (t.budgetUsd || 0), 0);
+                    const days = config.logistics.days || 1;
+                    const dailyBudget = totalBudget / days;
+                    if (dailyBudget < 60 && totalBudget > 0) {
+                      return (
+                        <div className="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+                           <div className="flex items-start">
+                             <div className="flex-shrink-0">
+                               <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                               </svg>
+                             </div>
+                             <div className="ml-3">
+                               <p className="text-sm font-bold text-red-800">
+                                 Budget Warning: ${Math.round(dailyBudget)}/day for the group is extremely low.
+                               </p>
+                               <p className="text-xs text-red-700 mt-1">
+                                 Namibian distances are vast and fuel is expensive. Consider adding more budget or relying strictly on Hitchhiking & Wild Camping.
+                               </p>
+                             </div>
+                           </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                       <label className="text-xs font-black uppercase text-stone-400">Days</label>
@@ -275,23 +325,43 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     </div>
                     <div className="md:col-span-2 space-y-4">
                       <label className="text-xs font-black uppercase text-stone-400">Travel Pace</label>
-                      <select 
-                        className="w-full p-4 border rounded-xl font-bold"
-                        value={config.logistics.pace}
-                        onChange={e => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, pace: e.target.value } }))}
-                      >
-                        {PACE_OPTIONS.map(p => <option key={p} value={p}>{p}</option>)}
-                      </select>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {PACE_OPTIONS.map(p => (
+                          <div 
+                            key={p.id}
+                            onClick={() => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, pace: p.label } }))}
+                            className={`relative h-32 rounded-xl overflow-hidden cursor-pointer group transition-all border-4 ${config.logistics.pace === p.label ? 'border-primary shadow-xl ring-2 ring-blue-50' : 'border-white shadow-sm hover:shadow-md'}`}
+                          >
+                            <img src={p.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110 opacity-70" alt={p.label} referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/pace/400/300'; }} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/60 to-transparent flex flex-col justify-end p-4">
+                               <p className="text-white text-xs font-bold leading-tight">{p.label}</p>
+                            </div>
+                            {config.logistics.pace === p.label && (
+                              <div className="absolute top-2 right-2 bg-primary p-1 rounded-full"><CheckCircle2 className="w-3 h-3 text-white" /></div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                     <div className="md:col-span-2 space-y-4">
-                      <label className="text-xs font-black uppercase text-stone-400">Recommended Lodging Tier (Matches Crew Budget)</label>
-                      <select 
-                        className="w-full p-4 border rounded-xl font-bold"
-                        value={config.logistics.budget}
-                        onChange={e => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, budget: e.target.value } }))}
-                      >
-                        {BUDGET_OPTIONS.map(b => <option key={b} value={b}>{b}</option>)}
-                      </select>
+                      <label className="text-xs font-black uppercase text-stone-400">Recommended Lodging Tier</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {BUDGET_OPTIONS.map(b => (
+                          <div 
+                            key={b.id}
+                            onClick={() => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, budget: b.label } }))}
+                            className={`relative h-24 rounded-xl overflow-hidden cursor-pointer group transition-all border-4 ${config.logistics.budget === b.label ? 'border-primary shadow-xl ring-2 ring-blue-50' : 'border-white shadow-sm hover:shadow-md'}`}
+                          >
+                            <img src={b.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110 opacity-70" alt={b.label} referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/budget/400/300'; }} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/60 to-transparent flex flex-col justify-end p-4">
+                               <p className="text-white text-xs font-bold leading-tight">{b.label}</p>
+                            </div>
+                            {config.logistics.budget === b.label && (
+                              <div className="absolute top-2 right-2 bg-primary p-1 rounded-full"><CheckCircle2 className="w-3 h-3 text-white" /></div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                     <div className="md:col-span-2 space-y-4">
                       <label className="text-xs font-black uppercase text-stone-400">Starting Location</label>

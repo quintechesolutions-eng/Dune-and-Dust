@@ -14,6 +14,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
   const [user] = useAuthState(auth);
   const [trips, setTrips] = useState<SavedItinerary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tripToDelete, setTripToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -42,9 +43,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
     });
   };
 
-  const deleteTrip = async (tripId: string) => {
-    if (window.confirm("Abandon this journey forever?")) {
-      await deleteDoc(doc(db, 'itineraries', tripId));
+  const confirmDelete = async () => {
+    if (tripToDelete) {
+      try {
+        await deleteDoc(doc(db, 'itineraries', tripToDelete));
+      } catch (error) {
+        console.error("Error deleting trip:", error);
+        alert("Failed to delete trip. Please check your connection.");
+      } finally {
+        setTripToDelete(null);
+      }
     }
   };
 
@@ -113,7 +121,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
                       {trip.isPublic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                     </button>
                     <button 
-                      onClick={() => deleteTrip(trip.id)}
+                      onClick={() => setTripToDelete(trip.id)}
                       className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition"
                       title="Delete"
                     >
@@ -133,6 +141,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
           </AnimatePresence>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {tripToDelete && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-stone-100"
+            >
+              <Trash2 className="w-12 h-12 text-red-500 mb-6" />
+              <h3 className="text-2xl font-black text-stone-900 mb-2">Abandon Journey?</h3>
+              <p className="text-stone-500 mb-8">This action is permanent and cannot be undone. Are you sure you want to delete this trip forever?</p>
+              
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setTripToDelete(null)}
+                  className="flex-1 px-4 py-3 rounded-xl bg-stone-100 text-stone-700 font-bold hover:bg-stone-200 transition"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmDelete}
+                  className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition shadow-lg shadow-red-500/30"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

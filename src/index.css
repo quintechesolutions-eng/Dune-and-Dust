@@ -4,19 +4,52 @@
 @theme {
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
-  --color-bg-main: #f0f2f5;
-  --color-bg-card: #ffffff;
-  --color-primary: #2563eb;
-  --color-text-main: #1f2937;
-  --color-text-muted: #6b7280;
-  --color-border-subtle: #e5e7eb;
-  --color-success: #10b981;
-  --color-gold: #f59e0b;
+  --color-bg-main: var(--theme-bg-main);
+  --color-bg-card: var(--theme-bg-card);
+  --color-primary: var(--theme-primary);
+  --color-text-main: var(--theme-text-main);
+  --color-text-muted: var(--theme-text-muted);
+  --color-border-subtle: var(--theme-border-subtle);
+  --color-success: var(--theme-success);
+  --color-gold: var(--theme-gold);
 }
 
 @layer base {
+  :root {
+    --theme-bg-main: #f0f2f5;
+    --theme-bg-card: #ffffff;
+    --theme-primary: #2563eb;
+    --theme-text-main: #1f2937;
+    --theme-text-muted: #6b7280;
+    --theme-border-subtle: #e5e7eb;
+    --theme-success: #10b981;
+    --theme-gold: #f59e0b;
+  }
+  
+  :root[data-theme="sunset"] {
+    --theme-bg-main: #fff7ed;
+    --theme-bg-card: #ffffff;
+    --theme-primary: #ea580c;
+    --theme-text-main: #431407;
+    --theme-text-muted: #9a3412;
+    --theme-border-subtle: #ffedd5;
+    --theme-success: #84cc16;
+    --theme-gold: #f59e0b;
+  }
+  
+  :root[data-theme="forest"] {
+    --theme-bg-main: #f0fdf4;
+    --theme-bg-card: #ffffff;
+    --theme-primary: #059669;
+    --theme-text-main: #064e3b;
+    --theme-text-muted: #166534;
+    --theme-border-subtle: #dcfce7;
+    --theme-success: #10b981;
+    --theme-gold: #fbbf24;
+  }
+
   body {
-    @apply bg-bg-main text-text-main font-sans;
+    @apply bg-bg-main text-text-main font-sans transition-colors duration-500;
   }
 }
 

@@ -44,11 +44,20 @@ export interface ItineraryData {
   logistics: {
     packingList: string[];
     fuelAdvice: string;
+    transportBookingQuery?: string;
     estimatedBudgetTotalUSD: number;
+    budgetAllocation: {
+      accommodation: number;
+      transportation: number;
+      food: number;
+      activities: number;
+    };
   };
   dailyPlan: Array<{
     day: number;
     location: string;
+    latitude?: number;
+    longitude?: number;
     driveTimeHours: string;
     roadConditions?: string;
     fuelStopRecommendations: string;

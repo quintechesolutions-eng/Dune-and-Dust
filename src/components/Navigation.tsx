@@ -1,5 +1,5 @@
-import React from 'react';
-import { Compass, Menu, User, LogOut, LayoutDashboard, Trophy, PlusCircle, Users } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Compass, Menu, User, LogOut, LayoutDashboard, Trophy, PlusCircle, Users, Palette } from 'lucide-react';
 import { auth, signInWithGoogle, logout } from '../lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
@@ -10,6 +10,15 @@ interface NavigationProps {
 
 export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) => {
   const [user] = useAuthState(auth);
+  const [theme, setTheme] = useState('light');
+
+  const cycleTheme = () => {
+    const themes = ['light', 'sunset', 'forest'];
+    const nextIndex = (themes.indexOf(theme) + 1) % themes.length;
+    const nextTheme = themes[nextIndex];
+    setTheme(nextTheme);
+    document.documentElement.setAttribute('data-theme', nextTheme);
+  };
 
   return (
     <nav className="bg-white border-b border-border-subtle h-16 sticky top-0 z-50 shadow-sm">
@@ -47,6 +56,9 @@ export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) =>
 
           {user ? (
             <div className="flex items-center gap-3 pl-4 border-l border-border-subtle">
+              <button onClick={cycleTheme} className="text-stone-400 hover:text-stone-900 transition p-1" title="Cycle Theme">
+                <Palette className="w-5 h-5" />
+              </button>
               <img 
                 src={user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user.displayName}`} 
                 alt="Avatar" 
@@ -65,6 +77,9 @@ export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) =>
             </div>
           ) : (
             <div className="flex items-center gap-2 pl-4 border-l border-border-subtle">
+               <button onClick={cycleTheme} className="text-stone-400 hover:text-stone-900 transition p-1 mr-2" title="Cycle Theme">
+                 <Palette className="w-5 h-5" />
+               </button>
                <button 
                   onClick={signInWithGoogle}
                   className="flex items-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-900 px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm border border-stone-200"

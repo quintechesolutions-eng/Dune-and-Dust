@@ -207,23 +207,45 @@ export const UserProfile: React.FC = () => {
               <Car className="w-5 h-5 text-primary" />
               <h3 className="text-xl font-bold">Primary Expedition Vehicle</h3>
             </div>
-            <div className="grid grid-cols-2 gap-6">
-               <div className="space-y-2">
-                 <label className="text-[10px] font-bold uppercase text-text-muted">Make</label>
-                 <input 
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase font-bold text-text-muted">Preferred Vehicle Classification</label>
+                <select 
                   className="w-full p-3 bg-stone-50 border border-stone-100 rounded-xl font-bold"
                   value={profile.vehicle?.make || ''}
-                  onChange={e => setProfile(prev => ({ ...prev, vehicle: { ...prev.vehicle!, make: e.target.value } }))}
-                 />
-               </div>
-               <div className="space-y-2">
-                 <label className="text-[10px] font-bold uppercase text-text-muted">Model</label>
-                 <input 
-                  className="w-full p-3 bg-stone-50 border border-stone-100 rounded-xl font-bold"
-                  value={profile.vehicle?.model || ''}
-                  onChange={e => setProfile(prev => ({ ...prev, vehicle: { ...prev.vehicle!, model: e.target.value } }))}
-                 />
-               </div>
+                  onChange={e => setProfile(prev => ({ 
+                    ...prev, 
+                    vehicle: { ...prev.vehicle!, make: e.target.value } 
+                  }))}
+                >
+                  <option value="Heavy-Duty 4x4 SUV (Expedition Equipped)">Heavy-Duty 4x4 SUV (Expedition Equipped)</option>
+                  <option value="Standard 4x4 SUV">Standard 4x4 SUV</option>
+                  <option value="Compact 4x4 SUV">Compact 4x4 SUV</option>
+                  <option value="Hybrid 4x4 SUV">Hybrid 4x4 SUV</option>
+                  <option value="4x4 Expedition Campervan">4x4 Expedition Campervan</option>
+                  <option value="Fully Electric Safari Vehicle">Fully Electric Safari Vehicle</option>
+                  <option value="Rugged AWD Crossover">Rugged AWD Crossover</option>
+                  <option value="Small 2x4 Hatchback">Small 2x4 Hatchback</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-6 hidden">
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-bold uppercase text-text-muted">Make</label>
+                   <input 
+                    className="w-full p-3 bg-stone-50 border border-stone-100 rounded-xl font-bold"
+                    value={profile.vehicle?.make || ''}
+                    onChange={e => setProfile(prev => ({ ...prev, vehicle: { ...prev.vehicle!, make: e.target.value } }))}
+                   />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] font-bold uppercase text-text-muted">Model</label>
+                   <input 
+                    className="w-full p-3 bg-stone-50 border border-stone-100 rounded-xl font-bold"
+                    value={profile.vehicle?.model || ''}
+                    onChange={e => setProfile(prev => ({ ...prev, vehicle: { ...prev.vehicle!, model: e.target.value } }))}
+                   />
+                 </div>
+              </div>
             </div>
           </div>
           <div className="card-polished p-8 bg-white">
