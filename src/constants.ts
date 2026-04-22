@@ -1,4 +1,5 @@
 import { Bird, Palmtree, Mountain, Sun, Waves, MapPin, Tent } from 'lucide-react';
+import { ACTIVITIES_DATA } from './activities-data';
 
 export const APP_NAME = "DUNE & DUST";
 
@@ -20,28 +21,10 @@ export const NAMIBIA_REGIONS = [
   { id: 'luderitz', name: 'Lüderitz & Kolmanskop', lat: -26.6473, lng: 15.1581, desc: 'Ghost towns buried in sand and rugged windy coasts', icon: Palmtree, color: 'bg-cyan-100 text-cyan-800 border-cyan-300', gradient: 'from-gray-900 to-slate-500' }
 ];
 
-export const DIETARY_OPTIONS = [
-  'None (Omnivore)', 'Vegetarian', 'Vegan', 'Pescatarian', 'Gluten-Free', 'Dairy-Free', 
-  'Nut Allergy', 'Shellfish Allergy', 'Halal', 'Kosher', 'Keto / Low-Carb', 'Diabetic Friendly', 'FODMAP',
-  'Paleo', 'Soy-Free', 'Egg-Free'
-];
-
 export const DETAIL_LEVELS = [
   { id: 'brief', name: 'Executive Summary', desc: 'Just the highlights, driving times, and lodges.' },
   { id: 'standard', name: 'Standard Itinerary', desc: 'Balanced view with daily activities and meal tips.' },
   { id: 'insane', name: 'Insane Deep-Dive', desc: 'Minute-by-minute scheduling, extensive history, exact packing.' }
-];
-
-export const STARTING_LOCATIONS = [
-  'Windhoek (Hosea Kutako International Airport)',
-  'Windhoek (City Center)',
-  'Swakopmund',
-  'Walvis Bay (Airport)',
-  'Katima Mulilo (Caprivi)',
-  'Rundu',
-  'Keetmanshoop',
-  'Lüderitz',
-  'Ondangwa'
 ];
 
 export const ACCOMMODATION_STYLES = [
@@ -69,111 +52,31 @@ export const PACE_OPTIONS = [
   { id: 'insane', label: 'Insane (Dawn till dusk driving, maximum coverage)', image: 'https://images.unsplash.com/photo-1522881113591-b0e6df297298?auto=format&fit=crop&w=400&q=80' }
 ];
 
-export const INTERESTS_CATALOG = [
-  // ETOSHA
-  { region: 'etosha', category: 'Wildlife', label: 'Self-Drive Safari in Etosha Pan' },
-  { region: 'etosha', category: 'Wildlife', label: 'Guided Night Game Drive' },
-  { region: 'etosha', category: 'Photography', label: 'Waterhole Photography at Sunset' },
-  { region: 'etosha', category: 'Wildlife', label: 'Black Rhino Spotting at Okaukuejo' },
-  { region: 'etosha', category: 'Nature', label: 'Bird Watching at Fisher\'s Pan' },
-
-  // DAMARALAND
-  { region: 'damaraland', category: 'Wildlife', label: 'Tracking Free-Roaming Desert Rhinos' },
-  { region: 'damaraland', category: 'Wildlife', label: 'Desert-Adapted Elephant Tracking' },
-  { region: 'damaraland', category: 'Culture', label: 'Twyfelfontein Rock Engravings Tour' },
-  { region: 'damaraland', category: 'Culture', label: 'Living Museum of the Damara' },
-  { region: 'damaraland', category: 'Adventure', label: 'Hiking the Spitzkoppe (Matterhorn of Namibia)' },
-  { region: 'damaraland', category: 'Photography', label: 'Petrified Forest Exploration' },
-
-  // SKELETON COAST
-  { region: 'skeleton_coast', category: 'Wildlife', label: 'Cape Cross Seal Reserve' },
-  { region: 'skeleton_coast', category: 'Adventure', label: 'Shipwreck 4x4 Exploration' },
-  { region: 'skeleton_coast', category: 'Photography', label: 'Desolate Landscape Photography' },
-  { region: 'skeleton_coast', category: 'Fishing', label: 'Surf Casting Fishing Safari' },
-
-  // SWAKOPMUND & WALVIS BAY
-  { region: 'swakopmund', category: 'Wildlife', label: 'Walvis Bay Flamingo & Pelican Cruise' },
-  { region: 'swakopmund', category: 'Wildlife', label: 'Living Desert Tour (Little 5 Tracking)' },
-  { region: 'swakopmund', category: 'Adventure', label: 'Sandboarding the Namib Dunes' },
-  { region: 'swakopmund', category: 'Adventure', label: 'Quad Biking through the Desert' },
-  { region: 'swakopmund', category: 'Adventure', label: 'Skydiving over the Namib' },
-  { region: 'swakopmund', category: 'Relaxation', label: 'Swakopmund German Bakery Tour' },
-  { region: 'swakopmund', category: 'Adventure', label: 'Catamaran Dolphin Cruise' },
-  { region: 'swakopmund', category: 'Culture', label: 'Township Bicycle Tour' },
-
-  // SOSSUSVLEI
-  { region: 'sossusvlei', category: 'Adventure', label: 'Climbing Dune 45 at Sunrise' },
-  { region: 'sossusvlei', category: 'Photography', label: 'Deadvlei Ancient Trees Photography' },
-  { region: 'sossusvlei', category: 'Adventure', label: 'Big Daddy Dune Hike' },
-  { region: 'sossusvlei', category: 'Romance', label: 'Hot Air Balloon Flight over the Namib' },
-  { region: 'sossusvlei', category: 'Nature', label: 'Sesriem Canyon Walk' },
-  { region: 'sossusvlei', category: 'Action', label: 'Scenic Helicopter Flight' },
-
-  // FISH RIVER CANYON
-  { region: 'fish_river', category: 'Adventure', label: 'Multi-day Fish River Canyon Hike' },
-  { region: 'fish_river', category: 'Nature', label: 'Canyon Viewpoint Sundowners' },
-  { region: 'fish_river', category: 'Relaxation', label: 'Ai-Ais Hot Springs Soak' },
-  { region: 'fish_river', category: 'Adventure', label: 'Mule Trail Trekking' },
-
-  // CAPRIVI (Zambezi)
-  { region: 'caprivi', category: 'Wildlife', label: 'Zambezi River Hippo & Croc Safari' },
-  { region: 'caprivi', category: 'Wildlife', label: 'Birding in Bwabwata National Park' },
-  { region: 'caprivi', category: 'Adventure', label: 'Mokoro (Dugout Canoe) Trip' },
-  { region: 'caprivi', category: 'Fishing', label: 'Tiger Fishing Expedition' },
-  { region: 'caprivi', category: 'Culture', label: 'Traditional Village Visit' },
-
-  // KALAHARI
-  { region: 'kalahari', category: 'Culture', label: 'San Bushmen Guided Walk' },
-  { region: 'kalahari', category: 'Wildlife', label: 'Meerkat Encounter' },
-  { region: 'kalahari', category: 'Nature', label: 'Red Dune Sundowner Drive' },
-  { region: 'kalahari', category: 'Action', label: 'Kalahari Horseback Safari' },
-
-  // NAMIB RAND
-  { region: 'namib_rand', category: 'Action', label: 'Fat Bike Dune Cycling' },
-  { region: 'namib_rand', category: 'Nature', label: 'Dark Sky Stargazing Safari' },
-  { region: 'namib_rand', category: 'Nature', label: 'Fairy Circle Guided Tour' },
-  { region: 'namib_rand', category: 'Romance', label: 'Private Desert Sleep-Out' },
-
-  // KUNENE / EPUPA
-  { region: 'kunene', category: 'Culture', label: 'Himba Village Authentic Visit' },
-  { region: 'kunene', category: 'Nature', label: 'Epupa Falls Hike' },
-  { region: 'kunene', category: 'Adventure', label: 'White Water Rafting (Seasonal)' },
-  { region: 'kunene', category: 'Nature', label: 'Baobab Tree Photography' },
-
-  // WATERBERG
-  { region: 'waterberg', category: 'Wildlife', label: 'Rare Rhino Tracking' },
-  { region: 'waterberg', category: 'Adventure', label: 'Plateau Multi-Day Hike' },
-  { region: 'waterberg', category: 'History', label: 'Herero War Battle Sites' },
-  { region: 'waterberg', category: 'Wildlife', label: 'Cheetah Conservation Fund Visit' },
-
-  // KHAUDUM
-  { region: 'khaudum', category: 'Adventure', label: 'Deep Sand 4x4 Expedition' },
-  { region: 'khaudum', category: 'Wildlife', label: 'Wild Dog Spotting' },
-  { region: 'khaudum', category: 'Nature', label: 'Baobab Forest Camping' },
-
-  // LUDERITZ
-  { region: 'luderitz', category: 'Photography', label: 'Kolmanskop Ghost Town Tour' },
-  { region: 'luderitz', category: 'Nature', label: 'Diaz Point & Penguin Island' },
-  { region: 'luderitz', category: 'Culture', label: 'Oyster Tasting & Harbor Tour' },
-  { region: 'luderitz', category: 'History', label: 'Felsenkirche Cathedral Visit' }
-];
+// Expanded Interests Catalog
+export const INTERESTS_CATALOG = ACTIVITIES_DATA;
 
 export const LOADING_FACTS = [
   "Cross-referencing your car's fuel capacity with Namibian petrol stations...",
-  "Alerting the lodges about your dietary requirements...",
+  "Alerting the lodges about your preferences...",
   "Calculating gravel road driving speeds for your exact vehicle...",
   "Fact: The Namib Desert is over 55 million years old.",
   "Checking sunrise times for the perfect Deadvlei photo...",
   "Fact: Namibia has the largest free-roaming cheetah population.",
   "Ensuring the itinerary matches the ages of your travelers...",
-  "Generating an insane, minute-by-minute breakdown..."
+  "Generating an immersive, minute-by-minute breakdown..."
 ];
 
 export const VEHICLE_OPTIONS = [
-  { id: 'heavy_4x4', name: 'Heavy-Duty Expedition 4x4', drivetain: '4x4', fuel: 'Diesel', desc: 'The gold standard for African expeditions. Invincible on rough terrain.', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
-  { id: 'standard_4x4', name: 'Standard 4x4 SUV', drivetain: '4x4', fuel: 'Diesel', desc: 'Reliable, comfortable, and highly capable for all Namibian gravel and mild off-road.', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80' },
-  { id: 'compact_4x4', name: 'Compact 4x4 SUV', drivetain: '4x4', fuel: 'Petrol', desc: 'Small but mighty, perfect for two explorers negotiating tighter trails and saving on fuel.', image: 'https://images.unsplash.com/photo-1559404287-dc1945f85022?auto=format&fit=crop&w=800&q=80' },
-  { id: 'campervan', name: '4x4 Camper Motorhome', drivetain: '4x4', fuel: 'Diesel', desc: 'Fully integrated living space for maximum self-sufficiency and comfort.', image: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=800&q=80' },
-  { id: 'rugged_awd', name: 'Rugged AWD Crossover', drivetain: 'AWD', fuel: 'Petrol/Hybrid', desc: 'Suitable for main arterial routes and well-graded gravel, excellent fuel economy.', image: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=800&q=80' },
-  { id: 'small_hatchback', name: 'Small 2x4 Hatchback/Sedan', drivetain: '2WD', fuel: 'Petrol', desc: 'Budget-friendly city car. Strictly limited to tarred major roads only.', image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80' }
+  { id: 'heavy_4x4', name: 'Heavy-Duty Expedition 4x4 (e.g. Land Cruiser 79)', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 14, desc: 'The gold standard for African expeditions. Invincible on any terrain.', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
+  { id: 'standard_4x4', name: 'Standard 4x4 SUV (e.g. Toyota Fortuner)', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 10, desc: 'Reliable, comfortable, handles all Namibian gravel roads.', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80' },
+  { id: 'compact_4x4', name: 'Compact 4x4 (e.g. Suzuki Jimny)', drivetain: '4x4', fuel: 'Petrol', fuelL100km: 8, desc: 'Small but mighty, great fuel economy on lighter trails.', image: 'https://images.unsplash.com/photo-1559404287-dc1945f85022?auto=format&fit=crop&w=800&q=80' },
+  { id: 'luxury_suv', name: 'Luxury 4x4 SUV (e.g. Range Rover Sport)', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 12, desc: 'Premium comfort meets serious off-road capability.', image: 'https://images.unsplash.com/photo-1606611013014-0b949a64e2f6?auto=format&fit=crop&w=800&q=80' },
+  { id: 'hilux_double', name: 'Double Cab Bakkie (e.g. Toyota Hilux)', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 11, desc: 'Load bed for gear, rooftop tent ready, Namibia\'s workhorse.', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&w=800&q=80' },
+  { id: 'campervan', name: '4x4 Camper Motorhome', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 18, desc: 'Fully integrated living space for maximum self-sufficiency.', image: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=800&q=80' },
+  { id: 'rooftop_4x4', name: '4x4 with Rooftop Tent (e.g. Hilux + RTT)', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 12, desc: 'The classic overlander setup. Sleep anywhere, explore everything.', image: 'https://images.unsplash.com/photo-1504280390227-361cffbcceed?auto=format&fit=crop&w=800&q=80' },
+  { id: 'rugged_awd', name: 'AWD Crossover (e.g. Subaru Outback)', drivetain: 'AWD', fuel: 'Petrol', fuelL100km: 8, desc: 'Great on graded gravel, excellent fuel economy.', image: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=800&q=80' },
+  { id: 'minivan', name: 'Minivan / People Carrier (e.g. VW Caravelle)', drivetain: '2WD', fuel: 'Diesel', fuelL100km: 9, desc: 'Space for 6-8 passengers. Tarred roads and light gravel only.', image: 'https://images.unsplash.com/photo-1570733577524-3a047079e80d?auto=format&fit=crop&w=800&q=80' },
+  { id: 'small_hatchback', name: 'Small Hatchback/Sedan (e.g. VW Polo)', drivetain: '2WD', fuel: 'Petrol', fuelL100km: 6, desc: 'Budget-friendly. Strictly limited to tarred major roads.', image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80' },
+  { id: 'motorcycle', name: 'Adventure Motorcycle (e.g. BMW GS 1250)', drivetain: '2WD', fuel: 'Petrol', fuelL100km: 5, desc: 'For solo riders. Extreme freedom but requires experience.', image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80' },
+  { id: 'ev_suv', name: 'Electric SUV (e.g. Tesla Model Y)', drivetain: 'AWD', fuel: 'Electric', fuelL100km: 0, desc: 'Limited to major corridors with charging. Not recommended for remote routes.', image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=800&q=80' },
 ];

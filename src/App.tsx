@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Navigation } from './components/Navigation';
 import { Wizard } from './components/Wizard';
+import { QuickTrip } from './components/QuickTrip';
 import { Dashboard } from './components/Dashboard';
 import { Leaderboard } from './components/Leaderboard';
 import { UserProfile } from './components/UserProfile';
 import { SocialExplorer } from './components/SocialExplorer';
 import { ItineraryView } from './components/ItineraryView';
-import { generateItinerary } from './services/ai';
+import { generateItinerary, generateFromDescription } from './services/ai';
 import { db, auth, signInWithGoogle } from './lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { SavedItinerary, TripConfig, ItineraryData } from './types';
-import { Compass, ArrowRight, Play, Loader2 } from 'lucide-react';
+import { Compass, ArrowRight, Play, Loader2, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LOADING_FACTS } from './constants';
 
@@ -115,6 +116,66 @@ export default function App() {
     }
   };
 
+  const handleQuickGenerate = async (description: string, currency: string) => {
+    setIsGenerating(true);
+    try {
+      const result = await generateFromDescription(description, currency);
+
+      let finalTrip: SavedItinerary;
+
+      if (user) {
+        const docRef = await addDoc(collection(db, 'itineraries'), {
+          userId: user.uid,
+          userName: user.displayName,
+          userPhoto: user.photoURL,
+          title: result.tripSummary.headline,
+          overview: result.tripSummary.overview,
+          data: result,
+          baseCurrency: currency,
+          likes: 0,
+          isPublic: false,
+          createdAt: serverTimestamp()
+        });
+
+        finalTrip = {
+          id: docRef.id,
+          userId: user.uid,
+          userName: user.displayName || 'Explorer',
+          userPhoto: user.photoURL || '',
+          title: result.tripSummary.headline,
+          overview: result.tripSummary.overview,
+          data: result,
+          config: { baseCurrency: currency } as any,
+          likes: 0,
+          isPublic: false,
+          createdAt: new Date()
+        };
+      } else {
+        finalTrip = {
+          id: 'preview',
+          userId: 'anonymous',
+          userName: 'Explorer',
+          userPhoto: '',
+          title: result.tripSummary.headline,
+          overview: result.tripSummary.overview,
+          data: result,
+          config: { baseCurrency: currency } as any,
+          likes: 0,
+          isPublic: false,
+          createdAt: new Date()
+        };
+      }
+
+      setActiveTrip(finalTrip);
+      setView('results');
+    } catch (error) {
+      console.error(error);
+      alert("The desert winds were too strong. Please try again.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const Landing = () => {
     const images = [
       "https://images.unsplash.com/photo-1517409228833-c90a18bb7201?auto=format&fit=crop&w=1200&q=80",
@@ -160,6 +221,12 @@ export default function App() {
                 className="w-full sm:w-auto px-8 py-4 bg-primary hover:bg-blue-700 text-white font-bold text-lg rounded-xl transition shadow-lg shadow-blue-500/20 flex items-center justify-center gap-3 group"
               >
                 Start Expedition <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
+              </button>
+              <button 
+                onClick={() => setView('quicktrip')}
+                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold text-lg rounded-xl transition shadow-lg shadow-orange-500/20 flex items-center justify-center gap-3 group"
+              >
+                <Sparkles className="w-5 h-5" /> Describe a Trip
               </button>
               <button 
                 onClick={() => setView('leaderboard')}
@@ -225,6 +292,7 @@ export default function App() {
       <AnimatePresence mode="wait">
         {view === 'home' && <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><Landing /></motion.div>}
         {view === 'wizard' && <motion.div key="wizard" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}><Wizard onGenerate={handleGenerate} isLoading={isGenerating} /></motion.div>}
+        {view === 'quicktrip' && <motion.div key="quicktrip" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}><QuickTrip onGenerate={handleQuickGenerate} onSwitchToWizard={() => setView('wizard')} isLoading={isGenerating} /></motion.div>}
         {view === 'dashboard' && <motion.div key="dashboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><Dashboard onViewTrip={(trip) => { setActiveTrip(trip); setView('results'); }} /></motion.div>}
         {view === 'leaderboard' && <motion.div key="leaderboard" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><Leaderboard onViewTrip={(trip) => { setActiveTrip(trip); setView('results'); }} /></motion.div>}
         {view === 'profile' && <motion.div key="profile" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><UserProfile /></motion.div>}

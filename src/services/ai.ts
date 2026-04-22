@@ -16,7 +16,7 @@ const outputSchemaStr = `{
     "packingList": ["string"],
     "fuelAdvice": "string",
     "transportBookingQuery": "string",
-    "estimatedBudgetTotalUSD": "number",
+    "estimatedBudgetTotal": "number",
     "budgetAllocation": {
       "accommodation": "number",
       "transportation": "number",
@@ -38,8 +38,7 @@ const outputSchemaStr = `{
       "meals": {
         "breakfast": "string",
         "lunch": "string",
-        "dinner": "string",
-        "dietaryNotes": "string"
+        "dinner": "string"
       },
       "accommodation": {
         "name": "string",
@@ -52,19 +51,25 @@ const outputSchemaStr = `{
 }`;
 
 export const generateItinerary = async (config: TripConfig): Promise<ItineraryData> => {
+  const fuelInfo = config.vehicle.fuelConsumptionL100km 
+    ? `Fuel Consumption: ~${config.vehicle.fuelConsumptionL100km}L/100km. Use this to calculate realistic fuel costs (Namibian diesel ~N$22/L, petrol ~N$24/L).`
+    : '';
+
   const prompt = `
     Create a custom Namibian travel itinerary.
     
     Travelers: ${config.travelers.length} people.
-    ${config.travelers.map(t => `- ${t.name} (Age: ${t.age}, Driver License: ${t.hasLicense ? 'Yes' : 'No'}, Diet: ${t.dietary}, Budget: ${t.budgetUsd || 0} ${config.baseCurrency || 'USD'})`).join('\n')}
-    Total Group Budget: ${config.travelers.reduce((acc, t) => acc + (t.budgetUsd || 0), 0)} ${config.baseCurrency || 'USD'}
+    ${config.travelers.map(t => `- ${t.name} (Age: ${t.age}, Driver License: ${t.hasLicense ? 'Yes' : 'No'}, Budget: ${t.budget || 0} ${config.baseCurrency || 'USD'})`).join('\n')}
+    Total Group Budget: ${config.travelers.reduce((acc, t) => acc + (t.budget || 0), 0)} ${config.baseCurrency || 'USD'}
     
     Vehicle Details: ${config.vehicle.make} (${config.vehicle.rentalMode === 'rental' ? 'Renting' : 'Own Vehicle'}, ${config.vehicle.drivetrain}), Fuel: ${config.vehicle.fuelType}.
-    *CRITICAL: Provide specific fuel stop advice. If renting, add the estimated daily rental cost of this specific 4x4 or sedan type to the overall budget calculation.*
+    Number of Vehicles: ${config.vehicle.numberOfVehicles || 1}${config.vehicle.numberOfVehicles > 1 ? ' (convoy — multiply fuel costs accordingly!)' : ''}.
+    ${fuelInfo}
+    *CRITICAL: Provide specific fuel stop advice based on the vehicle type and consumption rate.*
 
     Trip Logistics:
     - Travel Style: ${config.logistics.stayStyle === 'basecamp' ? 'Basecamp (Stay at ONE single accommodation for the entire trip and take day trips)' : 'Nomadic (Move between different accommodations along the route)'}
-    - Starting Location / Airport: ${config.logistics.startingLocation}
+    - Custom Pickups/Starts: ${config.customPickups && config.customPickups.length > 0 ? JSON.stringify(config.customPickups) : config.logistics.startingLocation || 'Not specified'}
     - Days: ${config.logistics.days}
     - Month: ${config.logistics.month}
     - Base Currency: ${config.baseCurrency || 'USD'}
@@ -77,26 +82,30 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     Specific Interests Requested: ${config.selectedInterests.join(', ')}.
 
     INSTRUCTIONS:
-    1. Base all activities predominantly on the selected regions and specific interests. Provide 1-3 distinct activities per day. 
-    2. Start the itinerary logically from the starting location. DO NOT assume the user is taking a flight on the final day.
-    3. Be DETAILED AND IMMERSIVE in the 'overview' and daily 'description'. Provide rich, multi-sentence narratives that capture the magic of the location.
+    1. Base all activities predominantly on the selected regions and specific interests. Provide 2-4 distinct activities per day. Be CREATIVE — suggest hidden gems, lesser-known viewpoints, unique cultural experiences, and off-the-beaten-path stops that most tourists miss.
+    2. Start the itinerary logically from the starting location or the Custom Pickups specified. Ensure you route through the requested pickups in order if provided.
+    3. Be DETAILED AND IMMERSIVE in the 'overview' and daily 'description'. Provide rich, multi-sentence narratives that paint a vivid picture.
     4. Account for realistic driving times. You MUST format 'driveTimeHours' to include both time and distance, e.g., "3.5 hours (~250km)".
     5. Provide lodging names that fit the explicitly requested 'Accommodation Scope' and budget priorities. 
     ${config.logistics.specificAccommodation ? `5b. CRITICAL: The user has requested a specific accommodation: ${config.logistics.specificAccommodation}. You MUST center their entire stay AND coordinates around THIS specific accommodation.` : ''}
     6. Ensure 'transportBookingQuery' (under logistics) is an accurate search query for finding rental cars for the user's vehicle type.
     7. ACCURATE COORDINATES: You MUST provide an accurate 'latitude' and 'longitude' mapping to a real place for EVERY SINGLE stop/lodge.
-    8. WAYPOINTS: Populate 'waypoints' with exact lat/lngs for gas stations and meal stops.
-    9. STAY STYLE AND OVERLAPPING: If 'Basecamp', use the EXACT SAME accommodation (name, latitude, longitude) for EVERY day.
-    10. ACCURATE PRICING: Under \`logistics.estimatedBudgetTotalUSD\`, give a REALISTIC budget based on true current prices, CONVERTED AND RETURNED IN THE USER'S BASE CURRENCY (${config.baseCurrency || 'USD'}). Do not just spit out the user's budget.
-    11. MEALS: For daily meals, provide specific local dish recommendations or actual restaurant names, DO NOT just say "Breakfast at lodge". Provide actual food inspiration.
+    8. FUEL CALCULATION: Use the provided fuel consumption rate (${config.vehicle.fuelConsumptionL100km || 12}L/100km) × total distance × number of vehicles (${config.vehicle.numberOfVehicles || 1}) to calculate realistic fuel costs within the budget allocation.
+    9. STAY STYLE: If 'Basecamp', use the EXACT SAME accommodation for EVERY day.
+    10. ACCURATE PRICING: Under \`logistics.estimatedBudgetTotal\`, give a REALISTIC budget in the user's base currency (${config.baseCurrency || 'USD'}). Do not just echo the user's stated budget.
+    11. MEALS: Provide specific local dish names and restaurant suggestions. DO NOT just say "Breakfast at lodge".
+    12. UNIQUENESS: Each itinerary should feel personal and unique. Suggest at least one surprising or unconventional activity the travelers wouldn't have thought of on their own.
   `;
 
-  const systemInstruction = `You are an elite Namibian travel architect. Output STRICTLY VALID JSON. Be concise enough to ensure the JSON successfully terminates.
+  const systemInstruction = `You are an elite Namibian travel architect. Output STRICTLY VALID JSON. DO NOT TRUNCATE YOUR RESPONSE.
 
-Your output MUST be a JSON object matching this schema exactly:
-${outputSchemaStr}
+CRITICAL JSON RULES:
+- You MUST return a complete, valid JSON object matching the exact schema below.
+- DO NOT use the symbol "=>" inside JSON. ALWAYS use colons ":" for key-value pairs.
+- DO NOT wrap the response in markdown blocks like \`\`\`json. Return ONLY raw JSON text.
 
-DO NOT wrap the response in markdown blocks like \`\`\`json. Return ONLY raw JSON text.`;
+SCHEMA:
+${outputSchemaStr}`;
 
   const response = await openrouter.chat.send({
     chatRequest: {
@@ -111,10 +120,114 @@ DO NOT wrap the response in markdown blocks like \`\`\`json. Return ONLY raw JSO
   let text = response.choices?.[0]?.message?.content;
   if (!text) throw new Error("Empty response from AI");
   
+  // Clean markdown wrap and fix common syntax errors made by this specific AI model (e.g. using '=>' instead of ':')
   text = text.replace(/^\`\`\`(json)?\s*/i, '').replace(/\`\`\`\s*$/i, '').trim();
+  text = text.replace(/"\s*=>\s*/g, '": '); // Fixes "key" => value
+  text = text.replace(/'\s*=>\s*/g, "': ");
   
+  // Try to salvage truncated JSON (basic trailing closure)
+  if (!text.endsWith('}')) {
+    const openBraces = (text.match(/\{/g) || []).length;
+    const closeBraces = (text.match(/\}/g) || []).length;
+    const openBrackets = (text.match(/\[/g) || []).length;
+    const closeBrackets = (text.match(/\]/g) || []).length;
+    
+    // Quick and dirty append to close the JSON structure
+    if (text[text.length-1] === ',') text = text.slice(0, -1);
+    else if (text[text.length-1] !== '"' && text[text.length-1] !== '}' && text[text.length-1] !== ']') {
+       // if trailing string without closing quote
+       if ((text.match(/"/g) || []).length % 2 !== 0) {
+           text += '"';
+       }
+    }
+
+    if (openBrackets > closeBrackets) text += ']'.repeat(openBrackets - closeBrackets);
+    if (openBraces > closeBraces) text += '}'.repeat(openBraces - closeBraces);
+  }
+
   try {
     return JSON.parse(text) as ItineraryData;
+  } catch (err) {
+    console.error("Failed to parse AI response as JSON:", text);
+    throw err;
+  }
+};
+
+/**
+ * Cleans raw AI text into valid JSON, repairing common model quirks.
+ */
+function cleanAndParseJSON(raw: string): any {
+  let text = raw.replace(/^`{1,3}(json)?\s*/i, '').replace(/`{1,3}\s*$/i, '').trim();
+  text = text.replace(/"\s*=>\s*/g, '": ');
+  text = text.replace(/'\s*=>\s*/g, "': ");
+
+  if (!text.endsWith('}')) {
+    const openBraces = (text.match(/\{/g) || []).length;
+    const closeBraces = (text.match(/\}/g) || []).length;
+    const openBrackets = (text.match(/\[/g) || []).length;
+    const closeBrackets = (text.match(/\]/g) || []).length;
+
+    if (text[text.length - 1] === ',') text = text.slice(0, -1);
+    else if (!['"', '}', ']'].includes(text[text.length - 1])) {
+      if ((text.match(/"/g) || []).length % 2 !== 0) text += '"';
+    }
+    if (openBrackets > closeBrackets) text += ']'.repeat(openBrackets - closeBrackets);
+    if (openBraces > closeBraces) text += '}'.repeat(openBraces - closeBraces);
+  }
+
+  return JSON.parse(text);
+}
+
+/**
+ * Generate a full itinerary from a freeform natural-language description.
+ * The AI interprets the user's prose and produces the same ItineraryData schema.
+ */
+export const generateFromDescription = async (
+  description: string,
+  baseCurrency: string = 'USD'
+): Promise<ItineraryData> => {
+
+  const systemInstruction = `You are an elite Namibian travel architect. The user will describe a trip they want in plain English. Your job is to interpret their description and produce a COMPLETE travel itinerary in STRICTLY VALID JSON.
+
+You must infer:
+- Number of travel days from the description (default to 7 if unclear)
+- Which Namibian regions to visit based on what they mention
+- Budget tier and accommodation style from context clues
+- Vehicle type from any mentions of driving, 4x4, camping, etc.
+- Travel pace from the tone of the description
+- Specific activities that match their interests
+
+ALL monetary values MUST be returned in ${baseCurrency}.
+
+CRITICAL JSON RULES:
+- Return ONLY a raw JSON object. No markdown, no wrapping, no commentary.
+- DO NOT use "=>" for key-value pairs. ALWAYS use ":".
+- DO NOT truncate. Return the COMPLETE object.
+
+SCHEMA:
+${outputSchemaStr}`;
+
+  const prompt = `Here is the user's trip description in their own words:
+
+"${description}"
+
+Create a detailed, immersive Namibian itinerary based on this description. Infer all details the user didn't specify. Be generous with activities (2-3 per day). Format driveTimeHours as "X hours (~Ykm)". Provide real restaurant names and local dishes for meals. Use accurate GPS coordinates for every location. Return budget values in ${baseCurrency}.`;
+
+  const response = await openrouter.chat.send({
+    chatRequest: {
+      model: "inclusionai/ling-2.6-flash:free",
+      messages: [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: prompt }
+      ]
+    }
+  });
+
+  let text = response.choices?.[0]?.message?.content;
+  if (!text) throw new Error("Empty response from AI");
+
+  try {
+    return cleanAndParseJSON(text) as ItineraryData;
   } catch (err) {
     console.error("Failed to parse AI response as JSON:", text);
     throw err;

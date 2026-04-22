@@ -3,8 +3,7 @@ export interface Traveler {
   name: string;
   age: number;
   hasLicense: boolean;
-  dietary: string;
-  budgetUsd: number;
+  budget: number;
 }
 
 export interface Vehicle {
@@ -13,6 +12,8 @@ export interface Vehicle {
   model: string;
   drivetrain: string;
   fuelType: string;
+  numberOfVehicles: number;
+  fuelConsumptionL100km?: number;
 }
 
 export interface Logistics {
@@ -22,10 +23,19 @@ export interface Logistics {
   budgetPriorities: string[];
   pace: string;
   detailLevel: string;
-  startingLocation: string;
+  startingLocation?: string;
   accommodationStyles: string[];
   specificAccommodation?: string;
   stayStyle?: 'nomadic' | 'basecamp';
+}
+
+export interface PickupPoint {
+  id: string;
+  lat: number;
+  lng: number;
+  type: 'start' | 'pickup';
+  reason: string;
+  order: number;
 }
 
 export interface TripConfig {
@@ -35,6 +45,7 @@ export interface TripConfig {
   selectedInterests: string[];
   logistics: Logistics;
   baseCurrency?: string;
+  customPickups: PickupPoint[];
 }
 
 export interface ItineraryData {
@@ -50,7 +61,7 @@ export interface ItineraryData {
     packingList: string[];
     fuelAdvice: string;
     transportBookingQuery?: string;
-    estimatedBudgetTotalUSD: number;
+    estimatedBudgetTotal: number;
     budgetAllocation: {
       accommodation: number;
       transportation: number;
@@ -72,7 +83,6 @@ export interface ItineraryData {
       breakfast: string;
       lunch: string;
       dinner: string;
-      dietaryNotes: string;
     };
     waypoints?: Array<{
       type: "meal" | "fuel" | "activity";
@@ -97,6 +107,7 @@ export interface SavedItinerary {
   title: string;
   overview: string;
   data: ItineraryData;
+  config?: { baseCurrency?: string; [key: string]: any };
   likes: number;
   isPublic: boolean;
   createdAt: any;
