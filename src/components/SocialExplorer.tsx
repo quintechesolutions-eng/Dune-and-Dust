@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, MessageSquare, UserPlus, Check, X, Send, 
   Search, Shield, Trophy, Activity, Camera, MapPin,
-  Settings, User
+  Settings, User, Loader2
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
 import { 
@@ -24,6 +24,8 @@ export const SocialExplorer: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [activeTab, setActiveTab] = useState<'friends' | 'search' | 'requests'>('friends');
+  const [loadingRequests, setLoadingRequests] = useState<Record<string, boolean>>({});
+  const [loadingSends, setLoadingSends] = useState<Record<string, boolean>>({});
   
   // Group creation state
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
@@ -136,18 +138,28 @@ export const SocialExplorer: React.FC = () => {
 
   const sendFriendRequest = async (targetUser: UserProfile) => {
     if (!user) return;
-    await addDoc(collection(db, 'friendRequests'), {
-      fromId: user.uid,
-      fromName: user.displayName,
-      toId: targetUser.uid,
-      status: 'pending',
-      createdAt: serverTimestamp()
-    });
-    alert(`Request sent to ${targetUser.username}`);
+    setLoadingSends(prev => ({ ...prev, [targetUser.uid]: true }));
+    try {
+      await addDoc(collection(db, 'friendRequests'), {
+        fromId: user.uid,
+        fromName: user.displayName,
+        toId: targetUser.uid,
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+      alert(`Request sent to ${targetUser.username}`);
+    } finally {
+      setLoadingSends(prev => ({ ...prev, [targetUser.uid]: false }));
+    }
   };
 
   const acceptRequest = async (req: FriendRequest) => {
-    await updateDoc(doc(db, 'friendRequests', req.id), { status: 'accepted' });
+    setLoadingRequests(prev => ({ ...prev, [req.id]: true }));
+    try {
+      await updateDoc(doc(db, 'friendRequests', req.id), { status: 'accepted' });
+    } finally {
+      setLoadingRequests(prev => ({ ...prev, [req.id]: false }));
+    }
   };
 
   const sendMessage = async () => {
@@ -357,8 +369,9 @@ export const SocialExplorer: React.FC = () => {
                        <button 
                         onClick={() => sendFriendRequest(result)}
                         className="p-2 bg-blue-50 text-primary rounded-lg hover:bg-blue-100 transition"
+                        disabled={loadingSends[result.uid]}
                        >
-                         <UserPlus className="w-4 h-4" />
+                         {loadingSends[result.uid] ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                        </button>
                     </div>
                  ))}
@@ -372,7 +385,9 @@ export const SocialExplorer: React.FC = () => {
                 <div key={req.id} className="p-4 bg-stone-50 rounded-xl border border-stone-100">
                   <p className="text-xs font-bold text-stone-900 mb-3">{req.fromName} wants to be friends.</p>
                   <div className="flex gap-2">
-                    <button onClick={() => acceptRequest(req)} className="flex-1 bg-primary text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2"><Check className="w-3 h-3" /> Accept</button>
+                    <button disabled={loadingRequests[req.id]} onClick={() => acceptRequest(req)} className="flex-1 bg-primary text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2">
+                      {loadingRequests[req.id] ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Accept
+                    </button>
                     <button className="p-2 bg-stone-200 text-stone-600 rounded-lg"><X className="w-3 h-3" /></button>
                   </div>
                 </div>

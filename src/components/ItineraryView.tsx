@@ -11,7 +11,7 @@ import { db, auth } from '../lib/firebase';
 import { doc, runTransaction, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { SocialShare } from './SocialShare';
-import Map, { Marker } from 'react-map-gl/maplibre';
+import Map, { Marker, Source, Layer } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
@@ -114,6 +114,21 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
   };
 
   const shareUrl = `${window.location.origin}/?trip=${trip.id}`;
+
+  const validDays = trip.data.dailyPlan.filter(d => d.latitude && d.longitude);
+  
+  const routeFeatures: any = {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: validDays.map(d => [d.longitude, d.latitude])
+        }
+      }
+    ]
+  };
 
   return (
     <div className="min-h-screen bg-bg-main pb-24 font-sans">
@@ -326,17 +341,26 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
         <div className="mt-16 relative">
           
           {/* Simplified Route Map */}
-          <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-sm border border-stone-100 mb-16">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center">
-                <MapIcon className="w-6 h-6 text-primary" />
+          <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] border border-stone-100 mb-20 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-10 relative z-10">
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-blue-600 shadow-xl shadow-primary/20 flex items-center justify-center rotate-3">
+                  <MapIcon className="w-7 h-7 text-white -rotate-3" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-black text-stone-900 tracking-tight">Expedition Route</h2>
+                  <p className="text-stone-500 font-medium mt-1 flex items-center gap-2">
+                    <Compass className="w-4 h-4 text-primary" /> Interactive 3D trajectory
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-2xl font-black text-stone-900">Route Map Overview</h2>
-                <p className="text-stone-500 font-medium text-sm">Automated structural mapping representation</p>
+              <div className="bg-amber-100 text-amber-800 text-xs font-black uppercase tracking-widest px-4 py-2 rounded-xl flex items-center gap-2 border border-amber-200">
+                 <NavIcon className="w-4 h-4" /> Click nodes to jump
               </div>
             </div>
-            <div className="w-full h-[500px] rounded-3xl overflow-hidden shadow-inner border border-stone-200 bg-stone-100">
+            
+            <div className="w-full h-[600px] rounded-[2rem] overflow-hidden shadow-inner border-2 border-stone-200/50 bg-[#e4e1db] relative group">
                <Map
                  initialViewState={{
                    longitude: trip.data.dailyPlan.find(d => d.longitude)?.longitude || 17.0658,
@@ -344,27 +368,91 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                    zoom: 5,
                    pitch: 45
                  }}
-                 mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+                 mapStyle="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
                  interactive={true}
                  attributionControl={false}
                >
-                  {trip.data.dailyPlan.filter(d => d.latitude && d.longitude).map((day, idx) => (
+                  <Source id="routeData" type="geojson" data={routeFeatures}>
+                     <Layer 
+                       id="routeLayerLineBase" 
+                       type="line" 
+                       paint={{
+                         "line-color": "#ffffff",
+                         "line-width": 8,
+                         "line-opacity": 0.8
+                       }}
+                     />
+                     <Layer 
+                       id="routeLayer" 
+                       type="line" 
+                       paint={{
+                         "line-color": "#2563eb",
+                         "line-width": 4,
+                         "line-opacity": 0.9,
+                         "line-dasharray": [2, 2]
+                       }}
+                     />
+                  </Source>
+
+                  {trip.data.dailyPlan.map(day => day.waypoints?.map((wp, i) => (
                     <Marker 
-                      key={idx}
-                      longitude={day.longitude!} 
-                      latitude={day.latitude!}
+                      key={`wp-${day.day}-${i}`}
+                      longitude={wp.longitude} 
+                      latitude={wp.latitude}
                       anchor="bottom"
                     >
-                      <div className="flex flex-col items-center group cursor-pointer">
-                         <div className="bg-stone-900 text-white text-[10px] font-black uppercase px-2 py-1 rounded-lg mb-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                            Day {day.day}: {day.location}
+                      <div className="flex flex-col items-center group cursor-pointer mt-2 hover:z-30 relative transition-transform hover:scale-110">
+                         <div className="bg-white text-stone-900 border border-stone-200 text-xs font-black uppercase px-3 py-1.5 rounded-xl mb-1 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            {wp.name}
                          </div>
-                         <div className="w-6 h-6 bg-primary rounded-full border-2 border-white shadow-lg flex items-center justify-center text-[10px] font-black text-white">
-                            {day.day}
+                         <div className="w-8 h-8 bg-white rounded-full border-2 border-stone-200 shadow-md flex items-center justify-center">
+                            {wp.type === 'fuel' ? <Fuel className="w-4 h-4 text-red-500" /> : 
+                             wp.type === 'meal' ? <Utensils className="w-4 h-4 text-orange-500" /> : 
+                             <Compass className="w-4 h-4 text-blue-500" />}
                          </div>
                       </div>
                     </Marker>
-                  ))}
+                  )))}
+
+                  {Object.values(
+                    trip.data.dailyPlan.filter(d => d.latitude && d.longitude).reduce((acc, day) => {
+                      const key = `${day.latitude!.toFixed(3)},${day.longitude!.toFixed(3)}`;
+                      if (!acc[key]) acc[key] = [];
+                      acc[key].push(day);
+                      return acc;
+                    }, {} as Record<string, typeof trip.data.dailyPlan>)
+                  ).map((group, idx) => {
+                    const firstDay = group[0];
+                    const daysLabel = group.map(d => d.day).join(', ');
+                    const title = group.map(d => d.location).find(l => l) || firstDay.location;
+
+                    return (
+                      <Marker 
+                        key={`group-${idx}`}
+                        longitude={firstDay.longitude!} 
+                        latitude={firstDay.latitude!}
+                        anchor="bottom"
+                        onClick={(e) => {
+                           e.originalEvent.stopPropagation();
+                           const el = document.getElementById(`day-${firstDay.day}`);
+                           if (el) {
+                             el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                           }
+                        }}
+                      >
+                        <div className="flex flex-col items-center group cursor-pointer transition-transform duration-300 hover:scale-[1.2] relative hover:z-40">
+                           <div className="bg-stone-900 text-white text-[12px] font-black uppercase px-3 py-1.5 rounded-xl mb-1 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 flex gap-2 items-center pointer-events-none">
+                              Day {daysLabel}: {title}
+                              <ArrowLeft className="w-3 h-3 rotate-[-135deg] text-primary" />
+                           </div>
+                           <div className="w-10 h-10 bg-primary/20 rounded-full absolute top-[calc(100%-2.5rem)] left-1/2 -translate-x-1/2 animate-ping" />
+                           <div className="px-3 min-w-[2rem] h-8 bg-primary rounded-full border-4 border-white shadow-xl flex items-center justify-center text-[12px] font-black text-white relative z-10 transition-colors group-hover:bg-stone-900 group-hover:text-primary">
+                              {daysLabel.length > 3 ? `${group[0].day}-${group[group.length-1].day}` : daysLabel}
+                           </div>
+                        </div>
+                      </Marker>
+                    );
+                  })}
                </Map>
             </div>
           </div>
@@ -374,11 +462,12 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
           <div className="space-y-24">
             {trip.data.dailyPlan.map((day, idx) => (
               <motion.div 
+                id={`day-${day.day}`}
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 key={idx} 
-                className="relative lg:pl-24"
+                className="relative lg:pl-24 scroll-mt-[100px]"
               >
                 {/* Day Marker */}
                 <div className="absolute left-0 top-2 w-20 h-20 bg-stone-900 text-white rounded-3xl hidden lg:flex flex-col items-center justify-center border-4 border-white shadow-xl z-10 transition-transform group-hover:scale-110">
@@ -489,15 +578,15 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                           <div className="space-y-6">
                             <h4 className="font-black text-xl text-stone-900 mb-2 flex items-center gap-3"><Utensils className="text-stone-400" /> Dining Rations</h4>
                             <div className="grid gap-4">
-                               <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
-                                  <Coffee className="w-5 h-5 text-stone-400" /> <span className="font-bold text-stone-800 text-sm whitespace-pre-wrap">{day.meals.breakfast}</span>
-                               </div>
-                               <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
-                                  <Utensils className="w-5 h-5 text-stone-400" /> <span className="font-bold text-stone-800 text-sm whitespace-pre-wrap">{day.meals.lunch}</span>
-                               </div>
-                               <div className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
-                                  <Moon className="w-5 h-5 text-stone-400" /> <span className="font-bold text-stone-800 text-sm whitespace-pre-wrap">{day.meals.dinner}</span>
-                               </div>
+                               <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.meals.breakfast + ' ' + day.location + ' Namibia')}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm hover:shadow-md hover:bg-stone-100 transition group/meal cursor-pointer block">
+                                  <Coffee className="w-5 h-5 text-stone-400 group-hover/meal:text-primary transition" /> <span className="font-bold text-stone-800 text-sm whitespace-pre-wrap group-hover/meal:text-primary transition">{day.meals.breakfast}</span>
+                               </a>
+                               <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.meals.lunch + ' ' + day.location + ' Namibia')}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm hover:shadow-md hover:bg-stone-100 transition group/meal cursor-pointer block">
+                                  <Utensils className="w-5 h-5 text-stone-400 group-hover/meal:text-primary transition" /> <span className="font-bold text-stone-800 text-sm whitespace-pre-wrap group-hover/meal:text-primary transition">{day.meals.lunch}</span>
+                               </a>
+                               <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.meals.dinner + ' ' + day.location + ' Namibia')}`} target="_blank" rel="noreferrer" className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm hover:shadow-md hover:bg-stone-100 transition group/meal cursor-pointer block">
+                                  <Moon className="w-5 h-5 text-stone-400 group-hover/meal:text-primary transition" /> <span className="font-bold text-stone-800 text-sm whitespace-pre-wrap group-hover/meal:text-primary transition">{day.meals.dinner}</span>
+                               </a>
                             </div>
                           </div>
                           {day.meals.dietaryNotes && (
@@ -518,7 +607,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
         {/* Global Logistics */}
         <div className="mt-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
            <div className="lg:col-span-2 bg-white p-12 rounded-[3rem] shadow-xl border border-stone-100">
-              <h3 className="text-3xl font-black mb-8 flex items-center gap-4"><Backpack className="text-primary w-8 h-8" /> Expedition Manifest</h3>
+              <h3 className="text-3xl font-black mb-8 flex items-center gap-4"><Backpack className="text-primary w-8 h-8" /> Items to bring along to improve trip quality</h3>
               <div className="grid sm:grid-cols-2 gap-4">
                  {trip.data.logistics.packingList.map((item, i) => (
                     <div key={i} className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl font-bold text-stone-600">

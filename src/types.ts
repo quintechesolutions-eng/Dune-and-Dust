@@ -8,6 +8,7 @@ export interface Traveler {
 }
 
 export interface Vehicle {
+  rentalMode: 'own' | 'rental';
   make: string;
   model: string;
   drivetrain: string;
@@ -18,10 +19,13 @@ export interface Logistics {
   days: number;
   month: string;
   budget: string;
+  budgetPriorities: string[];
   pace: string;
   detailLevel: string;
   startingLocation: string;
   accommodationStyles: string[];
+  specificAccommodation?: string;
+  stayStyle?: 'nomadic' | 'basecamp';
 }
 
 export interface TripConfig {
@@ -30,6 +34,7 @@ export interface TripConfig {
   vehicle: Vehicle;
   selectedInterests: string[];
   logistics: Logistics;
+  baseCurrency?: string;
 }
 
 export interface ItineraryData {
@@ -69,6 +74,12 @@ export interface ItineraryData {
       dinner: string;
       dietaryNotes: string;
     };
+    waypoints?: Array<{
+      type: "meal" | "fuel" | "activity";
+      name: string;
+      latitude: number;
+      longitude: number;
+    }>;
     accommodation: {
       name: string;
       type: string;
@@ -97,6 +108,7 @@ export interface UserProfile {
   displayName: string;
   photoURL: string;
   bio: string;
+  preferredCurrency?: 'USD' | 'EUR' | 'GBP' | 'NAD';
   achievements: string[];
   stats: {
     totalLikes: number;

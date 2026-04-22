@@ -199,6 +199,21 @@ export const UserProfile: React.FC = () => {
                     onChange={e => setProfile(prev => ({ ...prev, bio: e.target.value }))}
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-text-muted uppercase tracking-widest">Base Currency</label>
+                  <select 
+                    className="w-full p-4 bg-stone-50 border border-stone-100 rounded-xl font-bold text-text-main focus:ring-2 focus:ring-blue-100 focus:outline-none transition"
+                    value={profile.preferredCurrency || 'USD'}
+                    onChange={e => setProfile(prev => ({ ...prev, preferredCurrency: e.target.value }))}
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="NAD">NAD (N$)</option>
+                    <option value="ZAR">ZAR (R)</option>
+                  </select>
+                </div>
             </div>
           </div>
 

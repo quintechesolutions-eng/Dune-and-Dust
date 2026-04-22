@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { 
   MapPin, Users, Car, Heart, Settings, Plus, Trash2, Fuel, 
-  ChevronRight, ChevronLeft, Plane, Map as MapIcon, CheckCircle2 
+  ChevronRight, ChevronLeft, Plane, Map as MapIcon, CheckCircle2, Home 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Map, { Marker } from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import { NAMIBIA_REGIONS, DIETARY_OPTIONS, PACE_OPTIONS, BUDGET_OPTIONS, DETAIL_LEVELS, MONTHS, INTERESTS_CATALOG, VEHICLE_OPTIONS, STARTING_LOCATIONS, ACCOMMODATION_STYLES } from '../constants';
 import { TripConfig, Traveler } from '../types';
+import { auth, db } from '../lib/firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface WizardProps {
   onGenerate: (config: TripConfig) => void;
@@ -35,9 +40,8 @@ const RegionDetailsPanel = ({ isSelected }: { isSelected: string[] }) => {
             exit={{ opacity: 0 }}
             className="flex flex-col h-full"
           >
-            <div className="h-48 w-full rounded-2xl overflow-hidden mb-6 relative shrink-0 shadow-lg">
-               <img src={hoveredRegion.image} className="w-full h-full object-cover" alt={hoveredRegion.name} referrerPolicy="no-referrer" />
-               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6">
+            <div className={`h-48 w-full rounded-2xl overflow-hidden mb-6 relative shrink-0 shadow-lg bg-gradient-to-br ${hoveredRegion.gradient || 'from-stone-800 to-stone-500'}`}>
+               <div className="absolute inset-0 flex flex-col justify-end p-6">
                   <h3 className="text-white font-black text-3xl leading-none drop-shadow-md">{hoveredRegion.name}</h3>
                </div>
             </div>
@@ -71,22 +75,38 @@ const RegionDetailsPanel = ({ isSelected }: { isSelected: string[] }) => {
 };
 
 export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
+  const [user] = useAuthState(auth);
+  const [preferredCurrency, setPreferredCurrency] = useState('USD');
   const [step, setStep] = useState(1);
   const [config, setConfig] = useState<TripConfig>({
     selectedRegions: [],
     travelers: [{ id: 1, name: 'Explorer 1', age: 30, hasLicense: true, dietary: 'None (Omnivore)', budgetUsd: 1500 }],
-    vehicle: { make: VEHICLE_OPTIONS[0].name, model: '', drivetrain: VEHICLE_OPTIONS[0].drivetain, fuelType: VEHICLE_OPTIONS[0].fuel },
+    vehicle: { rentalMode: 'rental', make: VEHICLE_OPTIONS[0].name, model: '', drivetrain: VEHICLE_OPTIONS[0].drivetain, fuelType: VEHICLE_OPTIONS[0].fuel },
     selectedInterests: [],
     logistics: {
       days: 10,
       month: 'September',
       budget: 'Mid-Range (Standard Lodges, B&Bs, Glamping)',
+      budgetPriorities: [],
       pace: 'Moderate (The standard balance of driving and doing)',
       detailLevel: 'standard',
       startingLocation: STARTING_LOCATIONS[0],
       accommodationStyles: []
     }
   });
+
+  useEffect(() => {
+    if (user) {
+      getDoc(doc(db, 'users', user.uid)).then(docSnap => {
+        if (docSnap.exists()) {
+          const profile = docSnap.data();
+          if (profile.preferredCurrency) {
+            setPreferredCurrency(profile.preferredCurrency);
+          }
+        }
+      }).catch(console.error);
+    }
+  }, [user]);
 
   const toggleRegion = (id: string) => {
     setConfig(prev => ({
@@ -97,8 +117,39 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
     }));
   };
 
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [rouletteItems, setRouletteItems] = useState<string[]>([]);
+  const [currentRouletteDisplay, setCurrentRouletteDisplay] = useState('');
+
   const next = () => setStep(s => Math.min(6, s + 1));
   const back = () => setStep(s => Math.max(1, s - 1));
+
+  const handleGenerateClick = () => {
+    if (config.selectedRegions.length > config.logistics.days && config.logistics.days > 0) {
+      // Need to spin
+      setIsSpinning(true);
+      const shuffled = [...config.selectedRegions].sort(() => 0.5 - Math.random());
+      const keepers = shuffled.slice(0, config.logistics.days);
+      const allNames = NAMIBIA_REGIONS.filter(r => config.selectedRegions.includes(r.id)).map(r => r.name);
+      
+      setRouletteItems(allNames);
+
+      let spins = 0;
+      const spinInterval = setInterval(() => {
+        setCurrentRouletteDisplay(allNames[Math.floor(Math.random() * allNames.length)]);
+        spins++;
+        if (spins > 20) {
+          clearInterval(spinInterval);
+          setIsSpinning(false);
+          const finalConfig = { ...config, selectedRegions: keepers, baseCurrency: preferredCurrency };
+          setConfig(finalConfig);
+          onGenerate(finalConfig);
+        }
+      }, 100);
+    } else {
+      onGenerate({ ...config, baseCurrency: preferredCurrency });
+    }
+  };
 
   const stepVariants = {
     initial: { opacity: 0, x: 20 },
@@ -137,59 +188,58 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     <h2 className="text-3xl font-black mb-2">The Canvas</h2>
                     <p className="text-stone-500 mb-8">Click areas on the map to plot your journey.</p>
                     
+                    {config.selectedRegions.length > config.logistics.days && (
+                      <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-800 rounded-xl text-sm font-medium">
+                        <strong>Warning:</strong> You have selected {config.selectedRegions.length} regions but only have {config.logistics.days} days. This may cause the system to drop locations randomly during generation or produce an impossible itinerary. Consider increasing your trip duration conceptually.
+                      </div>
+                    )}
+                    
                     <div className="relative w-full aspect-[4/5] bg-[#E8E6E1] rounded-[3rem] shadow-inner border border-stone-200 overflow-hidden flex-1 group">
-                      {/* Decorative grid */}
-                      <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                      
-                      {/* Map abstract base shape (Namibia approx) */}
-                      <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-20" viewBox="0 0 100 100" preserveAspectRatio="none">
-                         <path d="M 25 10 L 60 10 L 60 5 L 95 5 L 95 10 L 60 10 L 65 30 L 70 50 L 70 70 L 90 70 L 85 95 L 50 95 L 45 85 L 50 75 L 30 65 L 10 40 L 15 20 Z" fill="#000" />
-                      </svg>
-
-                      {NAMIBIA_REGIONS.map(r => {
-                        const spotStyles: Record<string, { top: string; left: string; width: string; height: string; color: string }> = {
-                          'caprivi': { top: '8%', left: '70%', width: '25%', height: '10%', color: 'bg-green-400' },
-                          'etosha': { top: '18%', left: '40%', width: '25%', height: '18%', color: 'bg-emerald-400' },
-                          'skeleton_coast': { top: '25%', left: '12%', width: '15%', height: '35%', color: 'bg-cyan-400' },
-                          'damaraland': { top: '35%', left: '25%', width: '20%', height: '20%', color: 'bg-orange-400' },
-                          'swakopmund': { top: '55%', left: '12%', width: '15%', height: '15%', color: 'bg-blue-400' },
-                          'kalahari': { top: '50%', left: '60%', width: '30%', height: '35%', color: 'bg-yellow-400' },
-                          'sossusvlei': { top: '70%', left: '25%', width: '25%', height: '20%', color: 'bg-red-400' },
-                          'fish_river': { top: '85%', left: '45%', width: '20%', height: '15%', color: 'bg-amber-600' },
-                          'namib_rand': { top: '78%', left: '30%', width: '15%', height: '15%', color: 'bg-orange-500' },
-                          'kunene': { top: '8%', left: '25%', width: '20%', height: '12%', color: 'bg-teal-500' },
-                          'waterberg': { top: '30%', left: '45%', width: '15%', height: '12%', color: 'bg-rose-400' },
-                          'khaudum': { top: '15%', left: '60%', width: '15%', height: '15%', color: 'bg-lime-500' },
-                          'luderitz': { top: '75%', left: '15%', width: '10%', height: '10%', color: 'bg-indigo-400' }
-                        };
-                        const spot = spotStyles[r.id];
-                        if (!spot) return null;
-
-                        const isSelected = config.selectedRegions.includes(r.id);
-
-                        return (
-                          <div 
-                            key={r.id}
-                            className={`absolute transition-all duration-500 cursor-pointer -translate-x-1/2 -translate-y-1/2 flex items-center justify-center border-4 ${isSelected ? `border-white scale-110 shadow-2xl z-20 ${spot.color}` : `${spot.color} bg-opacity-40 border-transparent hover:bg-opacity-80 hover:scale-105 shadow-md z-10`}`}
-                            style={{ 
-                              top: spot.top, left: spot.left, width: spot.width, height: spot.height,
-                              animation: `blob ${3 + Math.random() * 2}s infinite alternate` 
-                            }}
-                            onClick={() => toggleRegion(r.id)}
-                            onMouseEnter={() => {
-                               // Dispatch a custom event to update the description area
-                               const event = new CustomEvent('regionHover', { detail: r });
-                               window.dispatchEvent(event);
-                            }}
-                            onMouseLeave={() => {
-                               const event = new CustomEvent('regionHover', { detail: null });
-                               window.dispatchEvent(event);
-                            }}
-                          >
-                             {isSelected && <CheckCircle2 className="text-white w-6 h-6 absolute" />}
-                          </div>
-                        )
-                      })}
+                      <Map
+                        initialViewState={{
+                          longitude: 17.5,
+                          latitude: -22.5,
+                          zoom: 4.2
+                        }}
+                        mapStyle="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+                        interactive={true}
+                        attributionControl={false}
+                      >
+                         {NAMIBIA_REGIONS.map(r => {
+                           const isSelected = config.selectedRegions.includes(r.id);
+                           return (
+                             <Marker 
+                               key={r.id} 
+                               longitude={r.lng!} 
+                               latitude={r.lat!}
+                               anchor="center"
+                               onClick={(e) => {
+                                 e.originalEvent.stopPropagation();
+                                 toggleRegion(r.id);
+                               }}
+                             >
+                                <div 
+                                  className={`relative group cursor-pointer transition-transform duration-300 hover:scale-125 z-10`}
+                                  onMouseEnter={() => {
+                                     const event = new CustomEvent('regionHover', { detail: r });
+                                     window.dispatchEvent(event);
+                                  }}
+                                  onMouseLeave={() => {
+                                     const event = new CustomEvent('regionHover', { detail: null });
+                                     window.dispatchEvent(event);
+                                  }}
+                                >
+                                   {isSelected && (
+                                     <div className="absolute -inset-2 bg-primary rounded-full animate-pulse opacity-30"></div>
+                                   )}
+                                   <div className={`w-8 h-8 rounded-full border-2 shadow-lg flex items-center justify-center transition-all ${isSelected ? 'bg-primary border-white scale-110' : 'bg-white border-stone-300 rotate-0'}`}>
+                                      {isSelected ? <CheckCircle2 className="w-4 h-4 text-white" /> : <r.icon className="w-4 h-4 text-stone-600" />}
+                                   </div>
+                                </div>
+                             </Marker>
+                           );
+                         })}
+                      </Map>
                     </div>
                   </div>
                   
@@ -215,6 +265,14 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                 <div>
                   <h2 className="text-3xl font-black mb-2">The Crew</h2>
                   <p className="text-stone-500 mb-8">Who are your fellow explorers?</p>
+                  
+                  {config.travelers.length > 0 && config.travelers.every(t => t.age > 0 && t.age < 18) && (
+                    <div className="mb-6 p-4 bg-orange-50 border border-orange-200 text-orange-800 rounded-xl text-sm flex items-start gap-3">
+                      <div className="mt-1 font-black">!</div>
+                      <p><strong>Heads Up:</strong> Your entire crew consists of minors under 18. While exciting, independent travel for unaccompanied minors in Namibia carries significant logistical and safety restrictions (especially for driving and border crossings). We won't stop you from planning, but please verify legal travel requirements.</p>
+                    </div>
+                  )}
+
                   <div className="space-y-4">
                     {config.travelers.map((t, idx) => (
                       <div key={t.id} className="p-6 bg-stone-50 rounded-2xl relative border border-stone-200">
@@ -245,10 +303,10 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                             />
                           </div>
                           <div className="space-y-1">
-                            <label className="text-[10px] uppercase font-black text-stone-400 pl-1">Budget ($USD)</label>
+                            <label className="text-[10px] uppercase font-black text-stone-400 pl-1">Budget ({preferredCurrency})</label>
                             <input 
                               type="number" 
-                              placeholder="Budget P/P (USD)" 
+                              placeholder={`Budget in ${preferredCurrency}`} 
                               className="w-full p-3 border rounded-xl"
                               value={t.budgetUsd || ''}
                               onChange={e => setConfig(prev => ({
@@ -312,13 +370,28 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                 <div>
                   <h2 className="text-3xl font-black mb-2">The Wheels</h2>
                   <p className="text-stone-500 mb-8">What are we driving across the dunes?</p>
+                  
+                  <div className="mb-8">
+                    <label className="block text-sm font-black uppercase text-stone-600 mb-2">Acquisition Method</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                       <button onClick={() => setConfig({ ...config, vehicle: { ...config.vehicle, rentalMode: 'rental' } })} className={`p-6 rounded-2xl border-2 text-left transition-all ${config.vehicle.rentalMode === 'rental' ? 'border-primary bg-blue-50 ring-2 ring-primary ring-offset-2' : 'border-stone-200 hover:border-stone-300'}`}>
+                         <h4 className="font-black text-lg mb-1 flex items-center gap-2"><Car className="w-5 h-5" /> Book a Rental</h4>
+                         <p className="text-sm font-medium text-stone-500">Pick up a fully equipped vehicle upon landing.</p>
+                       </button>
+                       <button onClick={() => setConfig({ ...config, vehicle: { ...config.vehicle, rentalMode: 'own' } })} className={`p-6 rounded-2xl border-2 text-left transition-all ${config.vehicle.rentalMode === 'own' ? 'border-primary bg-blue-50 ring-2 ring-primary ring-offset-2' : 'border-stone-200 hover:border-stone-300'}`}>
+                         <h4 className="font-black text-lg mb-1 flex items-center gap-2"><Home className="w-5 h-5" /> Self-Owned</h4>
+                         <p className="text-sm font-medium text-stone-500">I will be driving my own or a locally supplied car.</p>
+                       </button>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {VEHICLE_OPTIONS.map(v => (
                       <div 
                         key={v.id}
                         onClick={() => setConfig(prev => ({ 
                           ...prev, 
-                          vehicle: { make: v.name, model: '', drivetrain: v.drivetain, fuelType: v.fuel } 
+                          vehicle: { ...prev.vehicle, make: v.name, model: '', drivetrain: v.drivetain, fuelType: v.fuel } 
                         }))}
                         className={`relative h-48 rounded-[2rem] overflow-hidden cursor-pointer group transition-all border-4 ${config.vehicle.make === v.name ? 'border-primary shadow-xl ring-4 ring-blue-50' : 'border-white shadow-sm hover:shadow-md'}`}
                       >
@@ -430,7 +503,33 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     <div className="space-y-4">
                       <label className="text-xs font-black uppercase text-stone-400">Total Group Budget (Calculated)</label>
                       <div className="w-full p-4 border rounded-xl font-bold bg-stone-100/50 text-stone-600">
-                        ${config.travelers.reduce((acc, t) => acc + (t.budgetUsd || 0), 0).toLocaleString()} USD
+                        ${config.travelers.reduce((acc, t) => acc + (t.budgetUsd || 0), 0).toLocaleString()} {preferredCurrency}
+                      </div>
+                    </div>
+                    <div className="md:col-span-2 space-y-4">
+                      <label className="text-xs font-black uppercase text-stone-400">Budget Priorities</label>
+                      <div className="flex flex-wrap gap-3">
+                        {['Save on Fuel', 'Splurge on Food', 'Prioritize Activities', 'Luxury Accommodations', 'Budget/Camping'].map(priority => (
+                          <button
+                            key={priority}
+                            onClick={() => setConfig(prev => ({
+                              ...prev,
+                              logistics: {
+                                ...prev.logistics,
+                                budgetPriorities: prev.logistics.budgetPriorities?.includes(priority)
+                                  ? prev.logistics.budgetPriorities.filter(p => p !== priority)
+                                  : [...(prev.logistics.budgetPriorities || []), priority]
+                              }
+                            }))}
+                            className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                              config.logistics.budgetPriorities?.includes(priority)
+                                ? 'bg-amber-600 border-amber-600 text-white shadow-lg'
+                                : 'bg-white border-stone-200 text-stone-600 hover:border-amber-200'
+                            }`}
+                          >
+                            {priority}
+                          </button>
+                        ))}
                       </div>
                     </div>
                     <div className="md:col-span-2 space-y-4">
@@ -491,6 +590,39 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                 <div>
                   <h2 className="text-3xl font-black mb-2">The Stay</h2>
                   <p className="text-stone-500 mb-8">What type of homes or camps fit your vision?</p>
+
+                  <div className="mb-8 space-y-4">
+                     <label className="block text-sm font-black uppercase text-stone-600 mb-2">Trip Style: Nomadic or Basecamp?</label>
+                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button 
+                          onClick={() => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, stayStyle: 'nomadic' } }))}
+                          className={`p-6 border-2 rounded-2xl text-left transition-all ${(!config.logistics.stayStyle || config.logistics.stayStyle === 'nomadic') ? 'border-primary bg-blue-50 ring-2 ring-primary ring-offset-2' : 'border-stone-200 hover:border-stone-300'}`}
+                        >
+                           <h4 className="font-black text-lg mb-1 flex items-center gap-2"><MapPin className="w-5 h-5" /> Multi-Stop Journey</h4>
+                           <p className="text-sm font-medium text-stone-500">Move between different lodges and regions as you explore.</p>
+                        </button>
+                        <button 
+                          onClick={() => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, stayStyle: 'basecamp' } }))}
+                          className={`p-6 border-2 rounded-2xl text-left transition-all ${config.logistics.stayStyle === 'basecamp' ? 'border-primary bg-blue-50 ring-2 ring-primary ring-offset-2' : 'border-stone-200 hover:border-stone-300'}`}
+                        >
+                           <h4 className="font-black text-lg mb-1 flex items-center gap-2"><Home className="w-5 h-5" /> Single Basecamp</h4>
+                           <p className="text-sm font-medium text-stone-500">Stay at ONE accommodation for the whole trip and take day drives.</p>
+                        </button>
+                     </div>
+                  </div>
+                  
+                  <div className="mb-8 p-6 bg-stone-50 border border-stone-200 rounded-[2rem]">
+                    <label className="block text-sm font-black uppercase text-stone-600 mb-2">Have a specific lodge, house, or Airbnb in mind?</label>
+                    <p className="text-stone-500 text-sm mb-4">Enter its exact name and location so our AI can verify it and weave it into the route.</p>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Sossusvlei Lodge, or specific Airbnb name in Swakopmund" 
+                      className="w-full p-4 border rounded-xl font-medium focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition"
+                      value={config.logistics.specificAccommodation || ''}
+                      onChange={e => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, specificAccommodation: e.target.value } }))}
+                    />
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {ACCOMMODATION_STYLES.map(style => (
                       <div 
@@ -540,15 +672,42 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
             </button>
           ) : (
             <button 
-              disabled={isLoading}
-              onClick={() => onGenerate(config)}
+              disabled={isLoading || isSpinning}
+              onClick={handleGenerateClick}
               className="px-12 py-4 bg-primary text-white rounded-xl font-black text-lg flex items-center gap-3 hover:bg-blue-700 shadow-2xl shadow-blue-500/30 transition disabled:animate-pulse"
             >
-              {isLoading ? 'Architecting...' : 'Generate Journey'} <Plane className="w-6 h-6" />
+              {isLoading ? 'Architecting...' : isSpinning ? 'Running Roulette...' : 'Generate Journey'} <Plane className="w-6 h-6" />
             </button>
           )}
         </div>
       </div>
+
+      <AnimatePresence>
+        {isSpinning && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-stone-900/90 backdrop-blur-md flex flex-col items-center justify-center p-6"
+          >
+            <div className="absolute top-10 text-center">
+               <h2 className="text-3xl font-black text-white mb-2">Location Roulette</h2>
+               <p className="text-stone-300 font-medium">You selected more regions than days. We are randomly selecting the optimal {config.logistics.days} destinations for you!</p>
+            </div>
+            
+            <motion.div 
+              animate={{ 
+                scale: [1, 1.2, 1],
+                rotate: [0, 5, -5, 0]
+              }}
+              transition={{ repeat: Infinity, duration: 0.3 }}
+              className="mt-12 bg-white rounded-3xl p-8 shadow-2xl border-4 border-primary"
+            >
+               <p className="text-5xl md:text-7xl font-black text-stone-900 tracking-tighter">{currentRouletteDisplay || '...'}</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
