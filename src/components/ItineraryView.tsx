@@ -415,13 +415,13 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                   )))}
 
                   {Object.values(
-                    trip.data.dailyPlan.filter(d => d.latitude && d.longitude).reduce((acc, day) => {
+                    trip.data.dailyPlan.filter(d => d.latitude && d.longitude).reduce((acc: Record<string, any[]>, day) => {
                       const key = `${day.latitude!.toFixed(3)},${day.longitude!.toFixed(3)}`;
                       if (!acc[key]) acc[key] = [];
                       acc[key].push(day);
                       return acc;
-                    }, {} as Record<string, typeof trip.data.dailyPlan>)
-                  ).map((group, idx) => {
+                    }, {})
+                  ).map((group: any[], idx) => {
                     const firstDay = group[0];
                     const daysLabel = group.map(d => d.day).join(', ');
                     const title = group.map(d => d.location).find(l => l) || firstDay.location;

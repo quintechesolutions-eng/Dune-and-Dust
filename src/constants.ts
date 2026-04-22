@@ -75,6 +75,7 @@ export const INTERESTS_CATALOG = [
   { region: 'etosha', category: 'Wildlife', label: 'Guided Night Game Drive' },
   { region: 'etosha', category: 'Photography', label: 'Waterhole Photography at Sunset' },
   { region: 'etosha', category: 'Wildlife', label: 'Black Rhino Spotting at Okaukuejo' },
+  { region: 'etosha', category: 'Nature', label: 'Bird Watching at Fisher\'s Pan' },
 
   // DAMARALAND
   { region: 'damaraland', category: 'Wildlife', label: 'Tracking Free-Roaming Desert Rhinos' },
@@ -82,11 +83,13 @@ export const INTERESTS_CATALOG = [
   { region: 'damaraland', category: 'Culture', label: 'Twyfelfontein Rock Engravings Tour' },
   { region: 'damaraland', category: 'Culture', label: 'Living Museum of the Damara' },
   { region: 'damaraland', category: 'Adventure', label: 'Hiking the Spitzkoppe (Matterhorn of Namibia)' },
+  { region: 'damaraland', category: 'Photography', label: 'Petrified Forest Exploration' },
 
   // SKELETON COAST
   { region: 'skeleton_coast', category: 'Wildlife', label: 'Cape Cross Seal Reserve' },
   { region: 'skeleton_coast', category: 'Adventure', label: 'Shipwreck 4x4 Exploration' },
   { region: 'skeleton_coast', category: 'Photography', label: 'Desolate Landscape Photography' },
+  { region: 'skeleton_coast', category: 'Fishing', label: 'Surf Casting Fishing Safari' },
 
   // SWAKOPMUND & WALVIS BAY
   { region: 'swakopmund', category: 'Wildlife', label: 'Walvis Bay Flamingo & Pelican Cruise' },
@@ -95,6 +98,8 @@ export const INTERESTS_CATALOG = [
   { region: 'swakopmund', category: 'Adventure', label: 'Quad Biking through the Desert' },
   { region: 'swakopmund', category: 'Adventure', label: 'Skydiving over the Namib' },
   { region: 'swakopmund', category: 'Relaxation', label: 'Swakopmund German Bakery Tour' },
+  { region: 'swakopmund', category: 'Adventure', label: 'Catamaran Dolphin Cruise' },
+  { region: 'swakopmund', category: 'Culture', label: 'Township Bicycle Tour' },
 
   // SOSSUSVLEI
   { region: 'sossusvlei', category: 'Adventure', label: 'Climbing Dune 45 at Sunrise' },
@@ -102,46 +107,55 @@ export const INTERESTS_CATALOG = [
   { region: 'sossusvlei', category: 'Adventure', label: 'Big Daddy Dune Hike' },
   { region: 'sossusvlei', category: 'Romance', label: 'Hot Air Balloon Flight over the Namib' },
   { region: 'sossusvlei', category: 'Nature', label: 'Sesriem Canyon Walk' },
+  { region: 'sossusvlei', category: 'Action', label: 'Scenic Helicopter Flight' },
 
   // FISH RIVER CANYON
   { region: 'fish_river', category: 'Adventure', label: 'Multi-day Fish River Canyon Hike' },
   { region: 'fish_river', category: 'Nature', label: 'Canyon Viewpoint Sundowners' },
   { region: 'fish_river', category: 'Relaxation', label: 'Ai-Ais Hot Springs Soak' },
+  { region: 'fish_river', category: 'Adventure', label: 'Mule Trail Trekking' },
 
   // CAPRIVI (Zambezi)
   { region: 'caprivi', category: 'Wildlife', label: 'Zambezi River Hippo & Croc Safari' },
   { region: 'caprivi', category: 'Wildlife', label: 'Birding in Bwabwata National Park' },
   { region: 'caprivi', category: 'Adventure', label: 'Mokoro (Dugout Canoe) Trip' },
   { region: 'caprivi', category: 'Fishing', label: 'Tiger Fishing Expedition' },
+  { region: 'caprivi', category: 'Culture', label: 'Traditional Village Visit' },
 
   // KALAHARI
   { region: 'kalahari', category: 'Culture', label: 'San Bushmen Guided Walk' },
   { region: 'kalahari', category: 'Wildlife', label: 'Meerkat Encounter' },
   { region: 'kalahari', category: 'Nature', label: 'Red Dune Sundowner Drive' },
+  { region: 'kalahari', category: 'Action', label: 'Kalahari Horseback Safari' },
 
   // NAMIB RAND
   { region: 'namib_rand', category: 'Action', label: 'Fat Bike Dune Cycling' },
   { region: 'namib_rand', category: 'Nature', label: 'Dark Sky Stargazing Safari' },
   { region: 'namib_rand', category: 'Nature', label: 'Fairy Circle Guided Tour' },
+  { region: 'namib_rand', category: 'Romance', label: 'Private Desert Sleep-Out' },
 
   // KUNENE / EPUPA
   { region: 'kunene', category: 'Culture', label: 'Himba Village Authentic Visit' },
   { region: 'kunene', category: 'Nature', label: 'Epupa Falls Hike' },
   { region: 'kunene', category: 'Adventure', label: 'White Water Rafting (Seasonal)' },
+  { region: 'kunene', category: 'Nature', label: 'Baobab Tree Photography' },
 
   // WATERBERG
   { region: 'waterberg', category: 'Wildlife', label: 'Rare Rhino Tracking' },
   { region: 'waterberg', category: 'Adventure', label: 'Plateau Multi-Day Hike' },
   { region: 'waterberg', category: 'History', label: 'Herero War Battle Sites' },
+  { region: 'waterberg', category: 'Wildlife', label: 'Cheetah Conservation Fund Visit' },
 
   // KHAUDUM
   { region: 'khaudum', category: 'Adventure', label: 'Deep Sand 4x4 Expedition' },
   { region: 'khaudum', category: 'Wildlife', label: 'Wild Dog Spotting' },
+  { region: 'khaudum', category: 'Nature', label: 'Baobab Forest Camping' },
 
   // LUDERITZ
   { region: 'luderitz', category: 'Photography', label: 'Kolmanskop Ghost Town Tour' },
   { region: 'luderitz', category: 'Nature', label: 'Diaz Point & Penguin Island' },
-  { region: 'luderitz', category: 'Culture', label: 'Oyster Tasting & Harbor Tour' }
+  { region: 'luderitz', category: 'Culture', label: 'Oyster Tasting & Harbor Tour' },
+  { region: 'luderitz', category: 'History', label: 'Felsenkirche Cathedral Visit' }
 ];
 
 export const LOADING_FACTS = [
@@ -156,10 +170,10 @@ export const LOADING_FACTS = [
 ];
 
 export const VEHICLE_OPTIONS = [
-  { id: 'heavy_4x4', name: 'Toyota Land Cruiser 79 / 76 Series', drivetain: '4x4', fuel: 'Diesel', desc: 'The gold standard for African expeditions. Rooftop tent capable, invincible on rough terrain.', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
-  { id: 'standard_4x4', name: 'Toyota Fortuner / Ford Ranger', drivetain: '4x4', fuel: 'Diesel', desc: 'Reliable, comfortable, and highly capable for all Namibian gravel and mild off-road.', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80' },
-  { id: 'compact_4x4', name: 'Suzuki Jimny', drivetain: '4x4', fuel: 'Petrol', desc: 'Small but mighty, perfect for two explorers negotiating tighter trails and saving on fuel.', image: 'https://images.unsplash.com/photo-1559404287-dc1945f85022?auto=format&fit=crop&w=800&q=80' },
-  { id: 'campervan', name: 'Toyota Hilux 4x4 Camper', drivetain: '4x4', fuel: 'Diesel', desc: 'Fully integrated living space for maximum self-sufficiency and comfort.', image: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=800&q=80' },
-  { id: 'rugged_awd', name: 'Subaru Outback / Toyota RAV4 AWD', drivetain: 'AWD', fuel: 'Petrol/Hybrid', desc: 'Suitable for main arterial routes and well-graded gravel, excellent fuel economy.', image: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=800&q=80' },
-  { id: 'small_hatchback', name: 'VW Polo / Toyota Vitz (2WD)', drivetain: '2WD', fuel: 'Petrol', desc: 'Budget-friendly city car. Strictly limited to tarred major roads only.', image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80' }
+  { id: 'heavy_4x4', name: 'Heavy-Duty Expedition 4x4', drivetain: '4x4', fuel: 'Diesel', desc: 'The gold standard for African expeditions. Invincible on rough terrain.', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
+  { id: 'standard_4x4', name: 'Standard 4x4 SUV', drivetain: '4x4', fuel: 'Diesel', desc: 'Reliable, comfortable, and highly capable for all Namibian gravel and mild off-road.', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80' },
+  { id: 'compact_4x4', name: 'Compact 4x4 SUV', drivetain: '4x4', fuel: 'Petrol', desc: 'Small but mighty, perfect for two explorers negotiating tighter trails and saving on fuel.', image: 'https://images.unsplash.com/photo-1559404287-dc1945f85022?auto=format&fit=crop&w=800&q=80' },
+  { id: 'campervan', name: '4x4 Camper Motorhome', drivetain: '4x4', fuel: 'Diesel', desc: 'Fully integrated living space for maximum self-sufficiency and comfort.', image: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=800&q=80' },
+  { id: 'rugged_awd', name: 'Rugged AWD Crossover', drivetain: 'AWD', fuel: 'Petrol/Hybrid', desc: 'Suitable for main arterial routes and well-graded gravel, excellent fuel economy.', image: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=800&q=80' },
+  { id: 'small_hatchback', name: 'Small 2x4 Hatchback/Sedan', drivetain: '2WD', fuel: 'Petrol', desc: 'Budget-friendly city car. Strictly limited to tarred major roads only.', image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80' }
 ];

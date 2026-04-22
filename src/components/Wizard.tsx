@@ -126,7 +126,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
 
   const handleGenerateClick = () => {
     if (config.selectedRegions.length > config.logistics.days && config.logistics.days > 0) {
-      // Need to spin
+      // Need to spin (too many)
       setIsSpinning(true);
       const shuffled = [...config.selectedRegions].sort(() => 0.5 - Math.random());
       const keepers = shuffled.slice(0, config.logistics.days);
@@ -139,6 +139,29 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
         setCurrentRouletteDisplay(allNames[Math.floor(Math.random() * allNames.length)]);
         spins++;
         if (spins > 20) {
+          clearInterval(spinInterval);
+          setIsSpinning(false);
+          const finalConfig = { ...config, selectedRegions: keepers, baseCurrency: preferredCurrency };
+          setConfig(finalConfig);
+          onGenerate(finalConfig);
+        }
+      }, 100);
+    } else if (config.selectedRegions.length === 0) {
+      // Need to spin (none selected, random pick)
+      setIsSpinning(true);
+      const shuffled = [...NAMIBIA_REGIONS].sort(() => 0.5 - Math.random());
+      // Randomly select between 2 and min(days, 4) regions as a default
+      const randomCount = Math.max(2, Math.min(config.logistics.days || 3, 4));
+      const keepers = shuffled.slice(0, randomCount).map(r => r.id);
+      const randomNames = NAMIBIA_REGIONS.map(r => r.name);
+      
+      setRouletteItems(randomNames);
+
+      let spins = 0;
+      const spinInterval = setInterval(() => {
+        setCurrentRouletteDisplay(randomNames[Math.floor(Math.random() * randomNames.length)] + ' (Randomly Selecting)');
+        spins++;
+        if (spins > 30) {
           clearInterval(spinInterval);
           setIsSpinning(false);
           const finalConfig = { ...config, selectedRegions: keepers, baseCurrency: preferredCurrency };
@@ -503,7 +526,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     <div className="space-y-4">
                       <label className="text-xs font-black uppercase text-stone-400">Total Group Budget (Calculated)</label>
                       <div className="w-full p-4 border rounded-xl font-bold bg-stone-100/50 text-stone-600">
-                        ${config.travelers.reduce((acc, t) => acc + (t.budgetUsd || 0), 0).toLocaleString()} {preferredCurrency}
+                        {config.travelers.reduce((acc, t) => acc + (t.budgetUsd || 0), 0).toLocaleString()} {preferredCurrency}
                       </div>
                     </div>
                     <div className="md:col-span-2 space-y-4">
@@ -623,32 +646,42 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {ACCOMMODATION_STYLES.map(style => (
-                      <div 
-                        key={style.id}
-                        onClick={() => setConfig(prev => ({
-                          ...prev,
-                          logistics: {
-                            ...prev.logistics,
-                            accommodationStyles: prev.logistics.accommodationStyles.includes(style.name)
-                              ? prev.logistics.accommodationStyles.filter(s => s !== style.name)
-                              : [...prev.logistics.accommodationStyles, style.name]
-                          }
-                        }))}
-                        className={`relative h-48 rounded-[2rem] overflow-hidden cursor-pointer group transition-all border-4 ${config.logistics.accommodationStyles.includes(style.name) ? 'border-primary shadow-xl ring-4 ring-blue-50' : 'border-white shadow-sm hover:shadow-md'}`}
-                      >
-                        <img src={style.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110" alt={style.name} referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/accommodation/800/600'; }} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/40 to-transparent flex flex-col justify-end p-6">
-                           <h3 className="text-xl font-black text-white">{style.name}</h3>
-                           <p className="text-stone-300 text-xs font-medium leading-relaxed">{style.desc}</p>
+                  {!config.logistics.specificAccommodation ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                      {ACCOMMODATION_STYLES.map(style => (
+                        <div 
+                          key={style.id}
+                          onClick={() => setConfig(prev => ({
+                            ...prev,
+                            logistics: {
+                              ...prev.logistics,
+                              accommodationStyles: prev.logistics.accommodationStyles.includes(style.name)
+                                ? prev.logistics.accommodationStyles.filter(s => s !== style.name)
+                                : [...prev.logistics.accommodationStyles, style.name]
+                            }
+                          }))}
+                          className={`relative h-48 rounded-[2rem] overflow-hidden cursor-pointer group transition-all border-4 ${config.logistics.accommodationStyles.includes(style.name) ? 'border-primary shadow-xl ring-4 ring-blue-50' : 'border-white shadow-sm hover:shadow-md'}`}
+                        >
+                          <img src={style.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110" alt={style.name} referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/accommodation/800/600'; }} />
+                          <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/40 to-transparent flex flex-col justify-end p-6">
+                             <h3 className="text-xl font-black text-white">{style.name}</h3>
+                             <p className="text-stone-300 text-xs font-medium leading-relaxed">{style.desc}</p>
+                          </div>
+                          {config.logistics.accommodationStyles.includes(style.name) && (
+                            <div className="absolute top-4 right-4 bg-primary p-2 rounded-full shadow-lg"><CheckCircle2 className="w-4 h-4 text-white" /></div>
+                          )}
                         </div>
-                        {config.logistics.accommodationStyles.includes(style.name) && (
-                          <div className="absolute top-4 right-4 bg-primary p-2 rounded-full shadow-lg"><CheckCircle2 className="w-4 h-4 text-white" /></div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center border-2 border-dashed border-emerald-200 bg-emerald-50 rounded-[2rem]">
+                      <Home className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
+                      <h4 className="text-xl font-black text-emerald-800 mb-2">Specific Stay Locked In</h4>
+                      <p className="text-emerald-700 font-medium">
+                        Since you provided a specific accommodation, our AI will prioritize scheduling your journey effectively around that location instead of generic lodging categories.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </motion.div>

@@ -31,6 +31,7 @@ service cloud.firestore {
     match /usernames/{username} {
       allow read: if true;
       allow create: if isSignedIn() && incoming().uid == request.auth.uid && username.size() >= 3 && username.size() <= 30;
+      allow update: if isSignedIn() && existing().uid == request.auth.uid && incoming().uid == request.auth.uid;
     }
 
     // --- User Profiles ---
@@ -42,7 +43,7 @@ service cloud.firestore {
         && incoming().displayName is string && incoming().displayName.size() <= 100;
       allow update: if isOwner(userId)
         && incoming().displayName is string && incoming().displayName.size() <= 100
-        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'bio', 'vehicle', 'achievements', 'stats', 'username']);
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'bio', 'vehicle', 'achievements', 'stats', 'username', 'preferredCurrency']);
     }
 
     // --- Friend Requests ---

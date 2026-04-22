@@ -111,6 +111,7 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     3. Be CONCISE AND STRUCTURED. Limit daily descriptions to 2-3 sentences. DO NOT write excessively long narratives that could exceed output limits and cause the JSON to break.
     4. Account for realistic driving times for the specific vehicle type in Namibia.
     5. Provide lodging names that fit the explicitly requested 'Accommodation Scope' and budget priorities. 
+    ${config.logistics.specificAccommodation ? `5b. CRITICAL: The user has requested a specific accommodation: ${config.logistics.specificAccommodation}. You MUST use the googleSearch tool to find its exact location in Namibia. Center their entire stay AND coordinates around THIS specific accommodation rather than the initial starting point.` : ''}
     6. Ensure 'transportBookingQuery' (under logistics) is an accurate search query for finding rental cars for the user's vehicle type.
     7. ACCURATE COORDINATES: You MUST provide an accurate 'latitude' and 'longitude' mapping to a real place for EVERY SINGLE stop/lodge in the dailyPlan so it can be rendered on a 3D Mapping engine.
     8. WAYPOINTS: Populate 'waypoints' with exact lat/lngs for gas stations and meal stops.
@@ -127,7 +128,8 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
       responseMimeType: "application/json",
       responseSchema: outputSchema,
       temperature: 0.7,
-      maxOutputTokens: 8192
+      maxOutputTokens: 8192,
+      tools: [{ googleSearch: {} }]
     }
   });
 
