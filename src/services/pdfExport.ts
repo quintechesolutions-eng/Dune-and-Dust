@@ -3,148 +3,261 @@ import autoTable from 'jspdf-autotable';
 import { SavedItinerary } from '../types';
 
 export const exportToPDF = (trip: SavedItinerary) => {
-  const doc = new jsPDF() as any;
+  const doc = new jsPDF({
+    orientation: 'p',
+    unit: 'mm',
+    format: 'a4',
+    putOnlyUsedFonts: true
+  }) as any;
+
   const baseCurrency = (trip as any).baseCurrency || trip.config?.baseCurrency || 'USD';
   const currencySymbols: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', NAD: 'N$' };
   const symbol = currencySymbols[baseCurrency] || `${baseCurrency} `;
 
-  // Colors
-  const primaryColor = [59, 130, 246]; // Blue-500
-  const secondaryColor = [30, 41, 59]; // Stone-900
-  const accentColor = [245, 158, 11]; // Amber-500
+  // Premium Color Palette (Namibian Desert Inspired)
+  const colors = {
+    primary: [180, 83, 9],    // Deep Ochre / Burnt Orange
+    secondary: [28, 25, 23],  // Stone 900 / Charcoal
+    accent: [217, 119, 6],    // Amber 600 / Sunset Gold
+    muted: [120, 113, 108],   // Stone 500
+    bg: [248, 250, 252],      // Slate 50
+    light: [242, 242, 242],   // Light Grey
+    white: [255, 255, 255]
+  };
 
-  // Title Section
-  doc.setFillColor(...secondaryColor);
-  doc.rect(0, 0, 210, 40, 'F');
+  // Helper for adding section headers
+  const addSectionHeader = (text: string, y: number) => {
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...colors.secondary);
+    doc.text(text.toUpperCase(), 15, y);
+    
+    // Aesthetic underline
+    doc.setDrawColor(...colors.primary);
+    doc.setLineWidth(0.8);
+    doc.line(15, y + 2, 35, y + 2);
+    
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.1);
+    doc.line(35, y + 2, 195, y + 2);
+    
+    return y + 12;
+  };
+
+  // --- COVER PAGE ---
+  doc.setFillColor(...colors.secondary);
+  doc.rect(0, 0, 210, 297, 'F');
   
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
+  if ((doc as any).GState) {
+    doc.setFillColor(...colors.primary);
+    doc.setGState(new (doc as any).GState({ opacity: 0.1 }));
+    doc.circle(210, 0, 100, 'F');
+    doc.setGState(new (doc as any).GState({ opacity: 1 }));
+  } else {
+    doc.setFillColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.circle(210, 0, 100, 'F');
+  }
+
+  doc.setTextColor(...colors.white);
+  doc.setFontSize(42);
   doc.setFont('helvetica', 'bold');
-  doc.text(trip.title.toUpperCase(), 15, 20);
-  
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Curated by ${trip.userName} | Expedition App`, 15, 30);
+  const titleLines = doc.splitTextToSize(trip.title.toUpperCase(), 160);
+  doc.text(titleLines, 20, 100);
 
-  let yPos = 50;
-
-  // Overview
-  doc.setTextColor(...secondaryColor);
   doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('TRIP OVERVIEW', 15, yPos);
-  yPos += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...colors.accent);
+  doc.text('NAMIBIAN EXPEDITION ITINERARY', 20, 90);
+
+  doc.setTextColor(200, 200, 200);
+  doc.setFontSize(12);
+  doc.text(`A journey curated for ${trip.userName}`, 20, 110 + (titleLines.length * 15));
   
   doc.setFontSize(10);
+  doc.setTextColor(...colors.white);
+  doc.text('DUNE & DUST', 105, 270, { align: 'center' });
+  doc.setDrawColor(...colors.primary);
+  doc.line(95, 272, 115, 272);
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text('PREMIUM TRAVEL PLANNER', 105, 277, { align: 'center' });
+
+  // --- PAGE 2: OVERVIEW ---
+  doc.addPage();
+  let yPos = 25;
+
+  doc.setFillColor(...colors.bg);
+  doc.rect(0, 0, 210, 40, 'F');
+  doc.setTextColor(...colors.secondary);
+  doc.setFontSize(24);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Expedition Overview', 15, 25);
+  
+  yPos = 55;
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
+  doc.setTextColor(60, 60, 60);
   const overviewLines = doc.splitTextToSize(trip.overview, 180);
-  doc.text(overviewLines, 15, yPos);
-  yPos += (overviewLines.length * 5) + 10;
+  doc.text(overviewLines, 15, yPos, { lineHeightFactor: 1.5 });
+  yPos += (overviewLines.length * 7) + 15;
 
-  // Stats
-  doc.setDrawColor(230, 230, 230);
-  doc.line(15, yPos, 195, yPos);
-  yPos += 10;
-
+  // Key Stats Cards
   const totalBudget = trip.data.logistics.estimatedBudgetTotal || (trip.data.logistics as any).estimatedBudgetTotalUSD || 0;
-
   const stats = [
-    { label: 'DAYS', val: `${trip.data.dailyPlan.length}` },
-    { label: 'DISTANCE', val: `~${trip.data.tripSummary.totalEstimatedDistanceKm} km` },
+    { label: 'DURATION', val: `${trip.data.dailyPlan.length} Days` },
+    { label: 'DISTANCE', val: `${trip.data.tripSummary.totalEstimatedDistanceKm} km` },
     { label: 'BUDGET', val: `${symbol}${totalBudget.toLocaleString()}` },
-    { label: 'PACE', val: trip.config?.logistics?.pace || 'Standard' }
+    { label: 'PACE', val: trip.config?.logistics?.pace || 'Balanced' }
   ];
 
   let xPos = 15;
   stats.forEach(stat => {
+    doc.setFillColor(245, 245, 245);
+    doc.roundedRect(xPos, yPos, 42, 25, 3, 3, 'F');
     doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text(stat.label, xPos, yPos);
-    doc.setFontSize(11);
-    doc.setTextColor(...secondaryColor);
+    doc.setTextColor(...colors.muted);
     doc.setFont('helvetica', 'bold');
-    doc.text(stat.val, xPos, yPos + 6);
-    xPos += 45;
+    doc.text(stat.label, xPos + 5, yPos + 8);
+    doc.setFontSize(12);
+    doc.setTextColor(...colors.secondary);
+    doc.text(stat.val, xPos + 5, yPos + 18);
+    xPos += 47;
   });
-  yPos += 20;
+  yPos += 35;
 
-  // Itinerary Table
-  doc.setFontSize(14);
-  doc.setTextColor(...secondaryColor);
-  doc.setFont('helvetica', 'bold');
-  doc.text('DAILY ITINERARY', 15, yPos);
-  yPos += 5;
+  // Climate & Wildlife (NEW)
+  if (trip.data.tripSummary.climateExpectancy || trip.data.tripSummary.wildlifeExpectancy) {
+    doc.setFillColor(250, 250, 250);
+    doc.roundedRect(15, yPos, 180, 25, 4, 4, 'F');
+    doc.setDrawColor(240, 240, 240);
+    doc.rect(15, yPos, 180, 25, 'S');
 
-  const itineraryRows = trip.data.dailyPlan.map(day => [
-    `Day ${day.day}`,
-    `${day.location}\n\n${day.description.substring(0, 150)}...`,
-    `${day.activities.join('\n• ')}`,
-    `${day.accommodation.name}\n(${day.accommodation.type})`
-  ]);
-
-  autoTable(doc, {
-    startY: yPos,
-    head: [['Day', 'Destination & Summary', 'Activities', 'Accommodation']],
-    body: itineraryRows,
-    headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
-    margin: { left: 15, right: 15 },
-    styles: { fontSize: 9, cellPadding: 5 },
-    columnStyles: {
-      0: { cellWidth: 15 },
-      1: { cellWidth: 80 },
-      2: { cellWidth: 45 },
-      3: { cellWidth: 40 }
+    if (trip.data.tripSummary.climateExpectancy) {
+      doc.setFontSize(8);
+      doc.setTextColor(...colors.muted);
+      doc.text('CLIMATE:', 20, yPos + 8);
+      doc.setFontSize(9);
+      doc.setTextColor(...colors.secondary);
+      doc.text(doc.splitTextToSize(trip.data.tripSummary.climateExpectancy, 75), 20, yPos + 13);
     }
+
+    if (trip.data.tripSummary.wildlifeExpectancy) {
+      doc.setFontSize(8);
+      doc.setTextColor(...colors.muted);
+      doc.text('WILDLIFE:', 105, yPos + 8);
+      doc.setFontSize(9);
+      doc.setTextColor(...colors.secondary);
+      doc.text(doc.splitTextToSize(trip.data.tripSummary.wildlifeExpectancy, 75), 105, yPos + 13);
+    }
+    yPos += 35;
+  } else {
+    yPos += 10;
+  }
+
+  // --- THE JOURNEY (DETAILED DAY CARDS) ---
+  yPos = addSectionHeader('Detailed Itinerary', yPos);
+
+  trip.data.dailyPlan.forEach((day, index) => {
+    // Check for page break (estimated height needed for a day card: ~70mm)
+    if (yPos > 220) {
+      doc.addPage();
+      yPos = 25;
+    }
+
+    // Day Marker
+    doc.setFillColor(...colors.secondary);
+    doc.roundedRect(15, yPos, 180, 10, 2, 2, 'F');
+    doc.setTextColor(...colors.white);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`DAY ${day.day}: ${day.location.toUpperCase()}`, 20, yPos + 6.5);
+    yPos += 16;
+
+    // Narrative Description (THE "WAYY BETTER" TEXT)
+    doc.setTextColor(40, 40, 40);
+    doc.setFontSize(10.5);
+    doc.setFont('helvetica', 'normal');
+    const dayDescLines = doc.splitTextToSize(day.description, 170);
+    doc.text(dayDescLines, 20, yPos, { lineHeightFactor: 1.4 });
+    yPos += (dayDescLines.length * 5.5) + 8;
+
+    // Small info row (Drive Time & Accommodation)
+    doc.setFontSize(8.5);
+    doc.setTextColor(...colors.muted);
+    doc.setFont('helvetica', 'bold');
+    doc.text('LOGISTICS:', 20, yPos);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...colors.secondary);
+    const driveInfo = day.driveTimeHours ? ` • ${day.driveTimeHours} drive` : '';
+    const roadInfo = day.roadConditions ? ` • Road: ${day.roadConditions}` : '';
+    doc.text(`Stay: ${day.accommodation.name}${driveInfo}${roadInfo}`, 48, yPos);
+    yPos += 6;
+
+    // Activities (Bulleted)
+    if (day.activities.length > 0) {
+      doc.setFontSize(8.5);
+      doc.setTextColor(...colors.muted);
+      doc.setFont('helvetica', 'bold');
+      doc.text('PLANNED:', 20, yPos);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(60, 60, 60);
+      const activitiesText = day.activities.join('  •  ');
+      const actLines = doc.splitTextToSize(activitiesText, 140);
+      doc.text(actLines, 48, yPos);
+      yPos += (actLines.length * 4.5) + 12;
+    } else {
+      yPos += 8;
+    }
+
+    // Decorative Separator
+    doc.setDrawColor(240, 240, 240);
+    doc.setLineWidth(0.1);
+    doc.line(20, yPos - 4, 190, yPos - 4);
   });
 
-  // Next Page for Logistics
+  // --- PAGE: LOGISTICS & GEAR ---
   doc.addPage();
-  yPos = 20;
-
-  doc.setFontSize(14);
-  doc.setTextColor(...secondaryColor);
-  doc.setFont('helvetica', 'bold');
-  doc.text('LOGISTICS & GEAR', 15, yPos);
-  yPos += 10;
+  yPos = 25;
+  yPos = addSectionHeader('Logistics & Gear', yPos);
 
   // Packing List
-  doc.setFontSize(11);
-  doc.text('Recommended Gear:', 15, yPos);
-  yPos += 7;
-  
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Recommended Packing List', 15, yPos);
+  yPos += 8;
+
   const packingRows = [];
-  for (let i = 0; i < trip.data.logistics.packingList.length; i += 2) {
+  for (let i = 0; i < trip.data.logistics.packingList.length; i += 3) {
     packingRows.push([
-      `• ${trip.data.logistics.packingList[i]}`,
-      trip.data.logistics.packingList[i + 1] ? `• ${trip.data.logistics.packingList[i + 1]}` : ''
+      `• ${trip.data.logistics.packingList[i] || ''}`,
+      trip.data.logistics.packingList[i + 1] ? `• ${trip.data.logistics.packingList[i + 1]}` : '',
+      trip.data.logistics.packingList[i + 2] ? `• ${trip.data.logistics.packingList[i + 2]}` : ''
     ]);
   }
 
   autoTable(doc, {
     startY: yPos,
     body: packingRows,
-    styles: { fontSize: 9, cellPadding: 3 },
+    styles: { fontSize: 9, cellPadding: 3, textColor: [80, 80, 80] },
     theme: 'plain',
     margin: { left: 15 }
   });
 
-  yPos = ((doc as any).lastAutoTable?.finalY || yPos) + 15;
+  yPos = ((doc as any).lastAutoTable?.finalY || yPos) + 20;
 
-  // Budget Allocation
+  // Budget Breakdown
   if (trip.data.logistics.budgetAllocation) {
-    doc.setFontSize(11);
-    doc.setTextColor(...secondaryColor);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Budget Allocation:', 15, yPos);
-    yPos += 7;
+    yPos = addSectionHeader('Financial Estimates', yPos);
 
     const budgetData = [
       ['Accommodation', `${symbol}${trip.data.logistics.budgetAllocation.accommodation.toLocaleString()}`],
-      ['Transportation', `${symbol}${trip.data.logistics.budgetAllocation.transportation.toLocaleString()}`],
+      ['Transportation & Fuel', `${symbol}${trip.data.logistics.budgetAllocation.transportation.toLocaleString()}`],
       ['Food & Dining', `${symbol}${trip.data.logistics.budgetAllocation.food.toLocaleString()}`],
-      ['Activities', `${symbol}${trip.data.logistics.budgetAllocation.activities.toLocaleString()}`],
-      ['TOTAL ESTIMATED', `${symbol}${totalBudget.toLocaleString()}`]
+      ['Activities & Fees', `${symbol}${trip.data.logistics.budgetAllocation.activities.toLocaleString()}`],
+      [{ content: 'TOTAL ESTIMATED', styles: { fontStyle: 'bold', fillColor: colors.secondary, textColor: colors.white } }, 
+       { content: `${symbol}${totalBudget.toLocaleString()}`, styles: { fontStyle: 'bold', fillColor: colors.secondary, textColor: colors.white, halign: 'right' } }]
     ];
 
     autoTable(doc, {
@@ -153,20 +266,28 @@ export const exportToPDF = (trip: SavedItinerary) => {
       theme: 'grid',
       styles: { fontSize: 10, cellPadding: 5 },
       columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 50 },
-        1: { halign: 'right' }
+        0: { cellWidth: 60 },
+        1: { halign: 'right', cellWidth: 40 }
       },
-      margin: { left: 15, right: 100 }
+      margin: { left: 15 }
     });
   }
 
-  // Footer on all pages
+  // --- FOOTERS ---
   const pageCount = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
-    doc.setTextColor(150, 150, 150);
-    doc.text(`Generated by Dune & Dust Expedition Planner | Page ${i} of ${pageCount}`, 105, 285, { align: 'center' });
+    doc.setTextColor(180, 180, 180);
+    doc.text(`Page ${i} of ${pageCount}`, 195, 287, { align: 'right' });
+    
+    if (i > 1) {
+      doc.setFontSize(8);
+      doc.setTextColor(180, 180, 180);
+      doc.text('DUNE & DUST | PREPARED FOR ' + trip.userName.toUpperCase(), 15, 287);
+      doc.setDrawColor(230, 230, 230);
+      doc.line(15, 283, 195, 283);
+    }
   }
 
   doc.save(`${trip.title.replace(/\s+/g, '_')}_Itinerary.pdf`);
