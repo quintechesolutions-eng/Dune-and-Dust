@@ -1,5 +1,6 @@
 import { OpenRouter } from "@openrouter/sdk";
 import { TripConfig, ItineraryData } from "../types";
+import { ACTIVITIES_DATA } from "../activities-data";
 
 const openrouter = new OpenRouter({ apiKey: process.env.GEMINI_API_KEY as string });
 
@@ -81,10 +82,14 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     Selected Regions to Visit: ${config.selectedRegions.length > 0 ? config.selectedRegions.join(', ') : 'Suggest best locations'}.
     Specific Interests Requested: ${config.selectedInterests.join(', ')}.
 
+    AUTHENTIC ACTIVITIES REFERENCE:
+    Below is a list of REAL activities available in the selected regions. You MUST prioritize using these exact activities where they fit the itinerary. DO NOT make up imaginary activities.
+    ${ACTIVITIES_DATA.filter(a => config.selectedRegions.includes(a.region)).map(a => `- [${a.region.toUpperCase()}] ${a.label}`).join('\n')}
+
     INSTRUCTIONS:
-    1. Base all activities predominantly on the selected regions and specific interests. Provide 2-4 distinct activities per day. Be CREATIVE — suggest hidden gems, lesser-known viewpoints, unique cultural experiences, and off-the-beaten-path stops that most tourists miss.
+    1. Base all activities STRICTLY on real-world Namibian landmarks and the 'AUTHENTIC ACTIVITIES REFERENCE' provided above. Provide 2-4 distinct activities per day. DO NOT suggest imaginary or impossible activities (e.g., no 'kayaking in the desert' unless it's a real river, no 'riding rhinos').
     2. Start the itinerary logically from the starting location or the Custom Pickups specified. Ensure you route through the requested pickups in order if provided.
-    3. Be DETAILED AND IMMERSIVE in the 'overview' and daily 'description'. Provide rich, multi-sentence narratives that paint a vivid picture.
+    3. Be DETAILED AND IMMERSIVE in the 'overview' and daily 'description'. Provide rich, multi-sentence narratives that paint a vivid picture of the REAL landscape.
     4. Account for realistic driving times. You MUST format 'driveTimeHours' to include both time and distance, e.g., "3.5 hours (~250km)".
     5. Provide lodging names that fit the explicitly requested 'Accommodation Scope' and budget priorities. 
     ${config.logistics.specificAccommodation ? `5b. CRITICAL: The user has requested a specific accommodation: ${config.logistics.specificAccommodation}. You MUST center their entire stay AND coordinates around THIS specific accommodation.` : ''}
@@ -211,7 +216,10 @@ ${outputSchemaStr}`;
 
 "${description}"
 
-Create a detailed, immersive Namibian itinerary based on this description. Infer all details the user didn't specify. Be generous with activities (2-3 per day). Format driveTimeHours as "X hours (~Ykm)". Provide real restaurant names and local dishes for meals. Use accurate GPS coordinates for every location. Return budget values in ${baseCurrency}.`;
+    AUTHENTIC ACTIVITIES REFERENCE:
+    Use real-world Namibian activities such as: ${ACTIVITIES_DATA.slice(0, 50).map(a => a.label).join(', ')}.
+
+    Create a detailed, immersive Namibian itinerary based on this description. Infer all details the user didn't specify. Use ONLY real activities and landmarks. DO NOT hallucinate imaginary tours. Format driveTimeHours as "X hours (~Ykm)". Provide real restaurant names and local dishes for meals. Use accurate GPS coordinates for every location. Return budget values in ${baseCurrency}.`;
 
   const response = await openrouter.chat.send({
     chatRequest: {
