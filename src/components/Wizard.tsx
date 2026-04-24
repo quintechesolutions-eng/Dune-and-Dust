@@ -6,6 +6,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import Map, { Marker } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import maplibregl from 'maplibre-gl';
 import { NAMIBIA_REGIONS, PACE_OPTIONS, BUDGET_OPTIONS, DETAIL_LEVELS, MONTHS, INTERESTS_CATALOG, VEHICLE_OPTIONS, ACCOMMODATION_STYLES } from '../constants';
 import { TripConfig, Traveler, PickupPoint } from '../types';
 import { auth, db } from '../lib/firebase';
@@ -275,8 +276,9 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     
                     <div className="relative w-full aspect-[4/5] bg-[#E8E6E1] rounded-[3rem] shadow-inner border border-stone-200 overflow-hidden flex-1 group">
                       <Map
+                        mapLib={maplibregl}
                         initialViewState={{ longitude: 17.5, latitude: -22.5, zoom: 4.2 }}
-                        mapStyle="https://tiles.basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+                        mapStyle="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
                         interactive={true}
                         attributionControl={false}
                         onContextMenu={addCustomPickup}

@@ -3,8 +3,9 @@ import { db, auth } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { SavedItinerary } from '../types';
-import { Calendar, Trash2, Share2, Eye, EyeOff, Compass, Heart } from 'lucide-react';
+import { Calendar, Trash2, Share2, Eye, EyeOff, Compass, Heart, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { exportToPDF } from '../services/pdfExport';
 
 interface DashboardProps {
   onViewTrip: (trip: SavedItinerary) => void;
@@ -119,6 +120,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
                       title={trip.isPublic ? 'Public' : 'Private'}
                     >
                       {trip.isPublic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                    <button 
+                      onClick={() => exportToPDF(trip)}
+                      className="p-3 bg-stone-100 text-stone-700 rounded-xl hover:bg-stone-200 transition"
+                      title="Export to PDF"
+                    >
+                      <Download className="w-4 h-4" />
                     </button>
                     <button 
                       onClick={() => setTripToDelete(trip.id)}

@@ -3,7 +3,7 @@ import {
   Users, Car, Navigation as NavIcon, Info, Home, ExternalLink, 
   Compass, CheckCircle2, Coffee, Utensils, Moon, DollarSign,
   Heart, Share2, ArrowLeft, Fuel, Backpack, Map as MapIcon, PieChart as PieChartIcon,
-  Edit3, Save, X, Calendar, MapPin, Clock, Camera
+  Edit3, Save, X, Calendar, MapPin, Clock, Camera, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SavedItinerary } from '../types';
@@ -11,8 +11,10 @@ import { db, auth } from '../lib/firebase';
 import { doc, runTransaction, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { SocialShare } from './SocialShare';
+import { exportToPDF } from '../services/pdfExport';
 import Map, { Marker, Source, Layer } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import maplibregl from 'maplibre-gl';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface ItineraryViewProps {
@@ -145,6 +147,14 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition" /> Back to Dashboard
             </button>
             <div className="flex gap-3">
+              <button 
+                onClick={() => exportToPDF(trip)}
+                className="flex items-center gap-2 px-6 py-2.5 bg-white text-stone-900 rounded-full font-bold hover:bg-stone-100 transition shadow-lg group"
+                title="Export to PDF"
+              >
+                <Download className="w-5 h-5 group-hover:translate-y-0.5 transition" /> 
+                <span className="hidden sm:inline">Export PDF</span>
+              </button>
               {isOwner && (
                 <button 
                   onClick={() => isEditing ? handleSaveEdits() : setIsEditing(true)}
@@ -291,6 +301,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
           
           <div className="w-full h-[500px] md:h-[650px] rounded-[2rem] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.2)] border-4 border-stone-800 bg-[#0d1117] relative">
              <Map
+               mapLib={maplibregl}
                initialViewState={{
                  longitude: trip.data.dailyPlan.find(d => d.longitude)?.longitude || 17.0658,
                  latitude: trip.data.dailyPlan.find(d => d.latitude)?.latitude || -22.5609,
@@ -298,7 +309,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                  pitch: 60,
                  bearing: 20
                }}
-               mapStyle="https://tiles.basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+               mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
                interactive={true}
                attributionControl={false}
              >
