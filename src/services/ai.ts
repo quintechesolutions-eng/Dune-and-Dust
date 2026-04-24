@@ -100,17 +100,43 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     10. ACCURATE PRICING: Under \`logistics.estimatedBudgetTotal\`, give a REALISTIC budget in the user's base currency (${config.baseCurrency || 'USD'}). Do not just echo the user's stated budget.
     11. MEALS: Provide specific local dish names and restaurant suggestions. DO NOT just say "Breakfast at lodge".
     12. UNIQUENESS: Each itinerary should feel personal and unique. Suggest at least one surprising or unconventional activity the travelers wouldn't have thought of on their own.
+    13. REAL-WORLD RESEARCH: You are expected to act as if you are searching live databases. Provide REAL pricing, REAL restaurant names, and REAL housing options. If a user names a town, center your research on that town's actual infrastructure.
+    14. ACCURATE GEOLOCATION: Ensure the 'latitude' and 'longitude' for every daily stop are pinpoint accurate. Use the provided GEOGRAPHIC REFERENCE for major hubs.
   `;
 
   const systemInstruction = `You are an elite Namibian travel architect. Output STRICTLY VALID JSON. DO NOT TRUNCATE YOUR RESPONSE.
 
-CRITICAL JSON RULES:
-- You MUST return a complete, valid JSON object matching the exact schema below.
-- DO NOT use the symbol "=>" inside JSON. ALWAYS use colons ":" for key-value pairs.
-- DO NOT wrap the response in markdown blocks like \`\`\`json. Return ONLY raw JSON text.
+    GEOGRAPHIC REFERENCE (Coordinates):
+    Use these exact coordinates for markers:
+    - Windhoek: -22.5609, 17.0658
+    - Swakopmund: -22.6784, 14.5268
+    - Walvis Bay: -22.9575, 14.5053
+    - Sesriem/Sossusvlei: -24.4862, 15.7957
+    - Etosha (Okaukuejo): -19.1691, 15.9174
+    - Etosha (Namutoni): -18.8058, 16.9419
+    - Fish River Canyon: -27.6119, 17.7175
+    - Luderitz: -26.6477, 15.1594
+    - Twyfelfontein: -20.5950, 14.3736
+    - Epupa Falls: -17.0008, 13.2450
+    - Rundu: -17.9154, 19.7633
+    - Katima Mulilo: -17.5021, 24.2741
+    - Waterberg: -20.5114, 17.2411
+    - Brandberg: -21.1444, 14.5750
+    - Kolmanskop: -26.7042, 15.2319
+    - Cape Cross: -21.7708, 13.9872
 
-SCHEMA:
-${outputSchemaStr}`;
+    ACCOMMODATION & RESEARCH INSTRUCTIONS:
+    - If the user mentions a specific town or location, you MUST 'research' (use your knowledge) to suggest REAL, highly-rated accommodations in that specific area.
+    - DO NOT use generic names like "Desert Lodge" or "Coastal Hotel". Use specific names (e.g., "Strand Hotel Swakopmund", "Desert Quiver Camp", "GocheGanas", "Okaukuejo Resort").
+    - Activities MUST match the specific location (e.g., if in Swakopmund, suggest "Sandwich Harbour 4x4" or "Walvis Bay Catamaran").
+
+    CRITICAL JSON RULES:
+    - You MUST return a complete, valid JSON object matching the exact schema below.
+    - DO NOT use the symbol "=>" inside JSON. ALWAYS use colons ":" for key-value pairs.
+    - DO NOT wrap the response in markdown blocks like \`\`\`json. Return ONLY raw JSON text.
+
+    SCHEMA:
+    ${outputSchemaStr}`;
 
   const response = await openrouter.chat.send({
     chatRequest: {
@@ -194,23 +220,38 @@ export const generateFromDescription = async (
 
   const systemInstruction = `You are an elite Namibian travel architect. The user will describe a trip they want in plain English. Your job is to interpret their description and produce a COMPLETE travel itinerary in STRICTLY VALID JSON.
 
-You must infer:
-- Number of travel days from the description (default to 7 if unclear)
-- Which Namibian regions to visit based on what they mention
-- Budget tier and accommodation style from context clues
-- Vehicle type from any mentions of driving, 4x4, camping, etc.
-- Travel pace from the tone of the description
-- Specific activities that match their interests
+    GEOGRAPHIC REFERENCE (Coordinates):
+    Use these exact coordinates for markers:
+    - Windhoek: -22.5609, 17.0658
+    - Swakopmund: -22.6784, 14.5268
+    - Walvis Bay: -22.9575, 14.5053
+    - Sesriem/Sossusvlei: -24.4862, 15.7957
+    - Etosha (Okaukuejo): -19.1691, 15.9174
+    - Etosha (Namutoni): -18.8058, 16.9419
+    - Fish River Canyon: -27.6119, 17.7175
+    - Luderitz: -26.6477, 15.1594
+    - Twyfelfontein: -20.5950, 14.3736
+    - Epupa Falls: -17.0008, 13.2450
+    - Rundu: -17.9154, 19.7633
+    - Katima Mulilo: -17.5021, 24.2741
+    - Waterberg: -20.5114, 17.2411
+    - Brandberg: -21.1444, 14.5750
+    - Kolmanskop: -26.7042, 15.2319
+    - Cape Cross: -21.7708, 13.9872
 
-ALL monetary values MUST be returned in ${baseCurrency}.
+    ACCOMMODATION & RESEARCH INSTRUCTIONS:
+    - You MUST suggest REAL, highly-rated accommodations for every town mentioned.
+    - Activities MUST match the specific location realistically.
 
-CRITICAL JSON RULES:
-- Return ONLY a raw JSON object. No markdown, no wrapping, no commentary.
-- DO NOT use "=>" for key-value pairs. ALWAYS use ":".
-- DO NOT truncate. Return the COMPLETE object.
+    ALL monetary values MUST be returned in ${baseCurrency}.
 
-SCHEMA:
-${outputSchemaStr}`;
+    CRITICAL JSON RULES:
+    - Return ONLY a raw JSON object. No markdown, no wrapping, no commentary.
+    - DO NOT use "=>" for key-value pairs. ALWAYS use ":".
+    - DO NOT truncate. Return the COMPLETE object.
+
+    SCHEMA:
+    ${outputSchemaStr}`;
 
   const prompt = `Here is the user's trip description in their own words:
 
