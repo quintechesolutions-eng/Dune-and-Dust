@@ -276,7 +276,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     <div className="relative w-full aspect-[4/5] bg-[#E8E6E1] rounded-[3rem] shadow-inner border border-stone-200 overflow-hidden flex-1 group">
                       <Map
                         initialViewState={{ longitude: 17.5, latitude: -22.5, zoom: 4.2 }}
-                        mapStyle="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
+                        mapStyle="https://tiles.basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
                         interactive={true}
                         attributionControl={false}
                         onContextMenu={addCustomPickup}
@@ -570,7 +570,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                           .map(interest => (
                           <motion.button
                             variants={itemVariants}
-                            key={interest.label}
+                            key={interest.id}
                             onClick={() => setConfig(prev => ({
                               ...prev,
                               selectedInterests: prev.selectedInterests.includes(interest.label)

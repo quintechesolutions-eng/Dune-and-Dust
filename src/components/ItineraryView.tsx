@@ -34,7 +34,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
   const [activeDay, setActiveDay] = useState<number | null>(null);
 
   // Use the currency that was originally configured, or default to USD
-  const baseCurrency = trip.config?.baseCurrency || 'USD';
+  const baseCurrency = (trip as any).baseCurrency || trip.config?.baseCurrency || 'USD';
   const currencySymbols: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', NAD: 'N$' };
   const symbol = currencySymbols[baseCurrency] || `${baseCurrency} `;
 
@@ -298,7 +298,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                  pitch: 60,
                  bearing: 20
                }}
-               mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+               mapStyle="https://tiles.basemaps.cartocdn.com/gl/positron-gl-style/style.json"
                interactive={true}
                attributionControl={false}
              >
@@ -307,13 +307,13 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                    <Layer 
                      id="routeLayerGlow" 
                      type="line" 
-                     paint={{ "line-color": "#f59e0b", "line-width": 14, "line-opacity": 0.2, "line-blur": 10 }}
+                     paint={{ "line-color": "#94a3b8", "line-width": 14, "line-opacity": 0.2, "line-blur": 10 }}
                    />
                    {/* Inner Solid Line */}
                    <Layer 
                      id="routeLayerLineBase" 
                      type="line" 
-                     paint={{ "line-color": "#fbbf24", "line-width": 6, "line-opacity": 0.9 }}
+                     paint={{ "line-color": "#cbd5e1", "line-width": 6, "line-opacity": 0.9 }}
                    />
                    {/* Dashed Overlay */}
                    <Layer 
@@ -375,8 +375,8 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                          <div className="w-14 h-14 bg-amber-500/20 rounded-full absolute top-[calc(100%-3rem)] left-1/2 -translate-x-1/2 animate-ping" />
                          <div className={`w-14 h-14 rounded-full flex items-center justify-center border-[4px] shadow-[0_0_30px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all duration-300 relative z-10 ${
                           activeDay === firstDay.day 
-                            ? 'bg-amber-500 border-white scale-110 shadow-[0_0_30px_rgba(245,158,11,0.6)] text-white' 
-                            : 'bg-stone-900/80 border-stone-500 group-hover:border-amber-400 group-hover:bg-stone-800 text-stone-300 group-hover:text-amber-400'
+                            ? 'bg-primary border-white scale-110 shadow-[0_0_30px_rgba(59,130,246,0.6)] text-white' 
+                            : 'bg-stone-900/80 border-stone-500 group-hover:border-primary group-hover:bg-stone-800 text-stone-300 group-hover:text-primary'
                         }`}>
                             <span className="text-lg font-black tracking-tighter">
                               {daysLabel.length > 3 ? `${group[0].day}-${group[group.length-1].day}` : daysLabel}
@@ -614,7 +614,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                    </div>
                 </div>
                 <div className="h-[300px] w-full md:w-[350px] shrink-0">
-                   <ResponsiveContainer width="100%" height="100%">
+                   <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                      <PieChart>
                        <Pie
                          data={[
@@ -639,7 +639,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
 
            <div className="bg-stone-900 text-white p-10 md:p-12 rounded-[3rem] shadow-2xl flex flex-col justify-center text-center relative overflow-hidden">
               <div className="absolute top-0 right-0 p-8 opacity-10"><DollarSign className="w-32 h-32" /></div>
-              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-stone-400 mb-6">Total Estimate</h4>
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-stone-400 mb-6">Total Estimate ({baseCurrency})</h4>
               <div className="flex items-end justify-center gap-2 mb-2">
                  <span className="text-4xl text-primary font-black pb-2">{symbol}</span>
                  <span className="text-6xl md:text-7xl font-black tracking-tighter text-white">{formatCurrency(trip.data.logistics.estimatedBudgetTotal || (trip.data.logistics as any).estimatedBudgetTotalUSD)}</span>
