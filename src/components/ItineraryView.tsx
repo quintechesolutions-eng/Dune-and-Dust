@@ -3,12 +3,12 @@ import {
   Users, Car, Navigation as NavIcon, Info, Home, ExternalLink, 
   Compass, CheckCircle2, Coffee, Utensils, Moon, DollarSign,
   Heart, Share2, ArrowLeft, Fuel, Backpack, Map as MapIcon, PieChart as PieChartIcon,
-  Edit3, Save, X, Calendar, MapPin, Clock, Camera, Download
+  Edit3, Save, X, Calendar, MapPin, Clock, Camera, Download, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SavedItinerary } from '../types';
 import { db, auth } from '../lib/firebase';
-import { doc, runTransaction, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, runTransaction, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { SocialShare } from './SocialShare';
 import { exportToPDF } from '../services/pdfExport';
@@ -16,6 +16,7 @@ import Map, { Marker, Source, Layer } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibregl from 'maplibre-gl';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { getTripImage } from '../constants';
 
 interface ItineraryViewProps {
   trip: SavedItinerary;
@@ -27,6 +28,8 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
   const [hasLiked, setHasLiked] = useState(false);
   const [localLikes, setLocalLikes] = useState(trip.likes || 0);
   const [showShare, setShowShare] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isOwner = user?.uid === trip.userId;
   const [isEditing, setIsEditing] = useState(false);
@@ -111,6 +114,19 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
       console.error(e);
     }
   };
+  
+  const handleDeleteTrip = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteDoc(doc(db, 'itineraries', trip.id));
+      onBack(); // Navigate away after successful deletion
+    } catch (error) {
+      console.error("Error deleting trip:", error);
+      alert("Failed to delete trip. Please check your connection.");
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
 
   const shareUrl = `${window.location.origin}/?trip=${trip.id}`;
   const validDays = trip.data.dailyPlan.filter(d => d.latitude && d.longitude);
@@ -132,9 +148,9 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
       >
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://images.unsplash.com/photo-1517409228833-c90a18bb7201?auto=format&fit=crop&w=2000&q=80" 
+            src={getTripImage(trip.title, trip.data.dailyPlan[0]?.location)} 
             className="w-full h-full object-cover opacity-30 mix-blend-overlay transition-transform duration-[20s] hover:scale-110" 
-            alt="Namibia" 
+            alt={trip.title} 
             referrerPolicy="no-referrer" 
           />
           <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/60 to-transparent"></div>
@@ -166,6 +182,15 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
               {isEditing && (
                 <button onClick={() => setIsEditing(false)} className="p-2.5 bg-red-500/90 hover:bg-red-600 rounded-full text-white transition shadow-lg backdrop-blur-md">
                   <X className="w-5 h-5" />
+                </button>
+              )}
+              {isOwner && (
+                <button 
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="p-2.5 bg-red-500/10 hover:bg-red-500/20 rounded-full border border-red-500/20 text-red-500 transition shadow-lg backdrop-blur-md"
+                  title="Delete Trip"
+                >
+                  <Trash2 className="w-5 h-5" />
                 </button>
               )}
               <button onClick={toggleLike} className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold transition shadow-lg backdrop-blur-md ${hasLiked ? 'bg-rose-500 text-white' : 'bg-white/10 border border-white/20 text-white hover:bg-white/20'}`}>
@@ -687,6 +712,57 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
         title={trip.title} 
         url={shareUrl} 
       />
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-stone-900/80 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl border border-white"
+            >
+              <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mb-8">
+                <Trash2 className="w-10 h-10 text-rose-500" />
+              </div>
+              <h3 className="text-3xl font-black text-stone-900 mb-4">Purge Journey?</h3>
+              <p className="text-stone-500 mb-10 leading-relaxed text-lg">
+                This action is irreversible. Your trajectory, logistics, and metadata will be permanently removed from the Dune & Dust archives.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button 
+                  disabled={isDeleting}
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 px-8 py-4 rounded-2xl bg-stone-100 text-stone-700 font-bold hover:bg-stone-200 transition disabled:opacity-50"
+                >
+                  Keep Journey
+                </button>
+                <button 
+                  disabled={isDeleting}
+                  onClick={handleDeleteTrip}
+                  className="flex-1 px-8 py-4 rounded-2xl bg-rose-500 text-white font-bold hover:bg-rose-600 transition shadow-xl shadow-rose-500/20 flex items-center justify-center gap-3 disabled:opacity-70"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Purging...</span>
+                    </>
+                  ) : (
+                    "Delete Forever"
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

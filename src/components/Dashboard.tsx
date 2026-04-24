@@ -3,9 +3,10 @@ import { db, auth } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { SavedItinerary } from '../types';
-import { Calendar, Trash2, Share2, Eye, EyeOff, Compass, Heart, Download } from 'lucide-react';
+import { Calendar, Trash2, Share2, Eye, EyeOff, Compass, Heart, Download, Car, Navigation as NavIcon, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { exportToPDF } from '../services/pdfExport';
+import { getTripImage } from '../constants';
 
 interface DashboardProps {
   onViewTrip: (trip: SavedItinerary) => void;
@@ -16,6 +17,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
   const [trips, setTrips] = useState<SavedItinerary[]>([]);
   const [loading, setLoading] = useState(true);
   const [tripToDelete, setTripToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -46,12 +48,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
 
   const confirmDelete = async () => {
     if (tripToDelete) {
+      setIsDeleting(true);
       try {
         await deleteDoc(doc(db, 'itineraries', tripToDelete));
       } catch (error) {
         console.error("Error deleting trip:", error);
         alert("Failed to delete trip. Please check your connection.");
       } finally {
+        setIsDeleting(false);
         setTripToDelete(null);
       }
     }
@@ -74,63 +78,115 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
 
   return (
     <div className="max-w-6xl mx-auto py-12 px-4">
-      <div className="flex justify-between items-end mb-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
         <div>
-          <h1 className="text-4xl font-black text-stone-900 tracking-tight">Mission Control</h1>
-          <p className="text-stone-500 font-medium">Manage your personal safari architectures</p>
+          <h1 className="text-5xl font-black text-stone-900 tracking-tight mb-2">Mission Control</h1>
+          <p className="text-stone-500 font-medium text-lg">Your archived expeditions and safari architectures</p>
+        </div>
+        <div className="bg-white p-2 rounded-2xl shadow-sm border border-stone-100 flex gap-2">
+          <div className="px-4 py-2 bg-stone-50 rounded-xl text-center">
+             <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest">Total Trips</p>
+             <p className="text-xl font-black text-stone-900">{trips.length}</p>
+          </div>
         </div>
       </div>
 
       {trips.length === 0 ? (
-        <div className="text-center py-32 bg-white rounded-[3rem] border-2 border-dashed border-stone-200">
-           <Compass className="w-16 h-16 text-stone-200 mx-auto mb-4" />
-           <p className="text-stone-400 font-black">No journeys mapped yet.</p>
-        </div>
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-40 bg-white rounded-[4rem] border-2 border-dashed border-stone-200 shadow-inner"
+        >
+           <div className="w-24 h-24 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-sm">
+             <Compass className="w-12 h-12 text-stone-300" />
+           </div>
+           <h2 className="text-2xl font-black text-stone-900 mb-2">The horizon is empty.</h2>
+           <p className="text-stone-400 font-medium max-w-sm mx-auto mb-10">You haven't mapped any trajectories yet. Start your first Namibian expedition to see it archived here.</p>
+           <button 
+             onClick={() => window.location.href = '/'}
+             className="bg-stone-900 text-white px-10 py-4 rounded-2xl font-black hover:bg-stone-800 transition shadow-xl shadow-stone-900/20"
+           >
+             Map New Journey
+           </button>
+        </motion.div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <AnimatePresence>
             {trips.map(trip => (
               <motion.div
                 layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
                 key={trip.id}
-                className="group bg-white rounded-[2rem] border border-stone-100 shadow-sm hover:shadow-2xl transition-all overflow-hidden flex flex-col"
+                className="group bg-white rounded-[2.5rem] border border-stone-100 shadow-sm hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 overflow-hidden flex flex-col relative"
               >
-                <div className="p-8 flex-1">
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="flex items-center gap-2 px-3 py-1 bg-stone-100 rounded-full text-[10px] font-black uppercase tracking-widest text-stone-500">
-                      <Calendar className="w-3 h-3" /> {trip.createdAt?.toDate ? trip.createdAt.toDate().toLocaleDateString() : new Date(trip.createdAt).toLocaleDateString()}
-                    </div>
-                    <div className="flex items-center gap-1 text-red-500 font-black text-sm">
-                      <Heart className="w-4 h-4 fill-red-500" /> {trip.likes}
+                {/* Card Header Image/Pattern */}
+                <div className="h-40 bg-stone-900 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/20 to-transparent z-10" />
+                  <img 
+                    src={getTripImage(trip.title, trip.data.dailyPlan[0]?.location)} 
+                    className="w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-1000"
+                    alt={trip.title}
+                  />
+                  <div className="absolute top-6 left-6 z-20">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-widest text-white border border-white/10">
+                      <Calendar className="w-3 h-3 text-amber-400" /> {trip.createdAt?.toDate ? trip.createdAt.toDate().toLocaleDateString() : new Date(trip.createdAt).toLocaleDateString()}
                     </div>
                   </div>
-                  
-                  <h3 className="text-2xl font-black text-stone-900 mb-3 group-hover:text-amber-600 transition line-clamp-2">{trip.title}</h3>
-                  <p className="text-stone-500 text-sm line-clamp-3 leading-relaxed mb-6">{trip.overview}</p>
+                  <div className="absolute top-6 right-6 z-20">
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/20 backdrop-blur-md rounded-xl text-xs font-black text-rose-500 border border-rose-500/20">
+                      <Heart className="w-3.5 h-3.5 fill-rose-500" /> {trip.likes}
+                    </div>
+                  </div>
                 </div>
 
-                <div className="px-8 py-6 bg-stone-50 border-t border-stone-100 flex items-center justify-between">
+                <div className="p-8 flex-1 relative">
+                  {/* Floating Icon */}
+                  <div className="absolute -top-8 right-8 w-16 h-16 bg-white rounded-2xl shadow-xl border border-stone-100 flex items-center justify-center group-hover:-translate-y-2 transition-transform duration-500 z-20">
+                    <Compass className="w-8 h-8 text-amber-600" />
+                  </div>
+
+                  <h3 className="text-2xl font-black text-stone-900 mb-3 group-hover:text-amber-600 transition-colors line-clamp-1 pr-12">{trip.title}</h3>
+                  <p className="text-stone-500 text-sm line-clamp-2 leading-relaxed mb-8">{trip.overview}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="flex items-center gap-3 bg-stone-50 p-3 rounded-2xl border border-stone-100">
+                        <div className="p-2 bg-blue-100 rounded-lg"><Clock className="w-3.5 h-3.5 text-blue-600" /></div>
+                        <div>
+                          <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest leading-none mb-1">Duration</p>
+                          <p className="text-sm font-black text-stone-800">{trip.data.dailyPlan.length} Days</p>
+                        </div>
+                     </div>
+                     <div className="flex items-center gap-3 bg-stone-50 p-3 rounded-2xl border border-stone-100">
+                        <div className="p-2 bg-emerald-100 rounded-lg"><NavIcon className="w-3.5 h-3.5 text-emerald-600" /></div>
+                        <div>
+                          <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest leading-none mb-1">Distance</p>
+                          <p className="text-sm font-black text-stone-800">{trip.data.tripSummary.totalEstimatedDistanceKm}km</p>
+                        </div>
+                     </div>
+                  </div>
+                </div>
+
+                <div className="px-8 py-6 bg-stone-50/50 backdrop-blur-sm border-t border-stone-100 flex items-center justify-between gap-4">
                   <div className="flex gap-2">
                     <button 
                       onClick={() => togglePublic(trip.id, trip.isPublic)}
-                      className={`p-3 rounded-xl transition ${trip.isPublic ? 'bg-amber-100 text-amber-700' : 'bg-stone-200 text-stone-400 hover:bg-stone-300'}`}
+                      className={`p-3 rounded-xl transition shadow-sm ${trip.isPublic ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' : 'bg-white text-stone-400 hover:text-stone-600 border border-stone-200'}`}
                       title={trip.isPublic ? 'Public' : 'Private'}
                     >
                       {trip.isPublic ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                     </button>
                     <button 
                       onClick={() => exportToPDF(trip)}
-                      className="p-3 bg-stone-100 text-stone-700 rounded-xl hover:bg-stone-200 transition"
+                      className="p-3 bg-white text-stone-700 rounded-xl hover:bg-stone-50 transition border border-stone-200 shadow-sm"
                       title="Export to PDF"
                     >
                       <Download className="w-4 h-4" />
                     </button>
                     <button 
                       onClick={() => setTripToDelete(trip.id)}
-                      className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition"
+                      className="p-3 bg-rose-50 text-rose-500 rounded-xl hover:bg-rose-100 transition border border-rose-100 shadow-sm"
                       title="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -139,7 +195,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
 
                   <button 
                     onClick={() => onViewTrip(trip)}
-                    className="flex items-center gap-2 bg-stone-900 text-white px-6 py-3 rounded-xl text-sm font-black hover:bg-stone-800 transition shadow-lg"
+                    className="flex-1 flex items-center justify-center gap-2 bg-stone-900 text-white px-6 py-3.5 rounded-2xl text-sm font-black hover:bg-stone-800 hover:shadow-2xl hover:shadow-stone-900/30 transition-all active:scale-95 shadow-xl shadow-stone-900/10"
                   >
                     Details <Share2 className="w-4 h-4" />
                   </button>
@@ -165,22 +221,33 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
               exit={{ scale: 0.95, opacity: 0 }}
               className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-stone-100"
             >
-              <Trash2 className="w-12 h-12 text-red-500 mb-6" />
-              <h3 className="text-2xl font-black text-stone-900 mb-2">Abandon Journey?</h3>
-              <p className="text-stone-500 mb-8">This action is permanent and cannot be undone. Are you sure you want to delete this trip forever?</p>
+              <div className="w-20 h-20 bg-red-50 rounded-3xl flex items-center justify-center mb-6">
+                <Trash2 className="w-10 h-10 text-red-500" />
+              </div>
+              <h3 className="text-3xl font-black text-stone-900 mb-3">Abandon Journey?</h3>
+              <p className="text-stone-500 mb-10 leading-relaxed">This action is permanent. All mapped trajectory data and logistics will be purged from the archive.</p>
               
               <div className="flex gap-4">
                 <button 
+                  disabled={isDeleting}
                   onClick={() => setTripToDelete(null)}
-                  className="flex-1 px-4 py-3 rounded-xl bg-stone-100 text-stone-700 font-bold hover:bg-stone-200 transition"
+                  className="flex-1 px-6 py-4 rounded-2xl bg-stone-100 text-stone-700 font-bold hover:bg-stone-200 transition disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button 
+                  disabled={isDeleting}
                   onClick={confirmDelete}
-                  className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 transition shadow-lg shadow-red-500/30"
+                  className="flex-1 px-6 py-4 rounded-2xl bg-red-500 text-white font-bold hover:bg-red-600 transition shadow-xl shadow-red-500/20 flex items-center justify-center gap-2 disabled:opacity-70"
                 >
-                  Delete
+                  {isDeleting ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    "Delete Forever"
+                  )}
                 </button>
               </div>
             </motion.div>

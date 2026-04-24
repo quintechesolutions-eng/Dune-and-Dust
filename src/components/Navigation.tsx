@@ -13,12 +13,12 @@ export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) =>
   const [theme, setTheme] = useState('standard');
 
   const themes = ['standard', 'sunset', 'forest', 'ocean', 'desert'];
-  
+
   const cycleTheme = () => {
     const nextIndex = (themes.indexOf(theme) + 1) % themes.length;
     const nextTheme = themes[nextIndex];
     setTheme(nextTheme);
-    if(nextTheme === 'standard') {
+    if (nextTheme === 'standard') {
       document.documentElement.removeAttribute('data-theme');
     } else {
       document.documentElement.setAttribute('data-theme', nextTheme);
@@ -34,25 +34,25 @@ export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) =>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
-          <button 
+          <button
             onClick={() => onNav('dashboard')}
             className={`nav-item-polished ${currentView === 'dashboard' ? 'nav-item-active-polished' : ''}`}
           >
             <LayoutDashboard className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">My Trips</span>
           </button>
-          <button 
+          <button
             onClick={() => onNav('leaderboard')}
             className={`nav-item-polished ${currentView === 'leaderboard' ? 'nav-item-active-polished' : ''}`}
           >
             <Trophy className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Leaderboard</span>
           </button>
-          <button 
+          <button
             onClick={() => onNav('social')}
             className={`nav-item-polished ${currentView === 'social' ? 'nav-item-active-polished' : ''}`}
           >
             <Users className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Crew</span>
           </button>
-          <button 
+          <button
             onClick={() => onNav('wizard')}
             className="btn-primary-polished flex items-center gap-2"
           >
@@ -64,16 +64,16 @@ export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) =>
               <button onClick={cycleTheme} className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400 hover:text-primary transition py-1 px-2 rounded-lg hover:bg-stone-100" title="Cycle Theme">
                 <Palette className="w-4 h-4" /> <span className="hidden md:inline">{theme}</span>
               </button>
-              <img 
-                src={user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user.displayName}`} 
-                alt="Avatar" 
+              <img
+                src={user.photoURL || `https://api.dicebear.com/7.x/initials/svg?seed=${user.displayName}`}
+                alt="Avatar"
                 className="w-8 h-8 rounded-full bg-stone-200 cursor-pointer object-cover border-2 border-transparent hover:border-primary transition duration-300"
                 onClick={() => onNav('profile')}
                 referrerPolicy="no-referrer"
                 onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${user.displayName}`; }}
               />
-              <button 
-                onClick={logout} 
+              <button
+                onClick={logout}
                 className="text-stone-400 hover:text-stone-900 transition p-1"
                 title="Deauthorize"
               >
@@ -82,15 +82,15 @@ export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) =>
             </div>
           ) : (
             <div className="flex items-center gap-2 pl-4 border-l border-border-subtle">
-               <button onClick={cycleTheme} className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400 hover:text-primary transition py-1 px-2 rounded-lg hover:bg-stone-100 mr-2" title="Cycle Theme">
-                 <Palette className="w-4 h-4" /> <span className="hidden md:inline">{theme}</span>
-               </button>
-               <button 
-                  onClick={signInWithGoogle}
-                  className="flex items-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-900 px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm border border-stone-200"
-               >
-                  <User className="w-4 h-4" /> Sign In
-               </button>
+              <button onClick={cycleTheme} className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-stone-400 hover:text-primary transition py-1 px-2 rounded-lg hover:bg-stone-100 mr-2" title="Cycle Theme">
+                <Palette className="w-4 h-4" /> <span className="hidden md:inline">{theme}</span>
+              </button>
+              <button
+                onClick={signInWithGoogle}
+                className="flex items-center gap-2 bg-stone-100 hover:bg-stone-200 text-stone-900 px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm border border-stone-200"
+              >
+                <User className="w-4 h-4" /> Sign In
+              </button>
             </div>
           )}
         </div>
