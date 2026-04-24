@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { SavedItinerary } from '../types';
 
 export const exportToPDF = (trip: SavedItinerary) => {
@@ -82,7 +82,7 @@ export const exportToPDF = (trip: SavedItinerary) => {
     `${day.accommodation.name}\n(${day.accommodation.type})`
   ]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: yPos,
     head: [['Day', 'Destination & Summary', 'Activities', 'Accommodation']],
     body: itineraryRows,
@@ -121,7 +121,7 @@ export const exportToPDF = (trip: SavedItinerary) => {
     ]);
   }
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: yPos,
     body: packingRows,
     styles: { fontSize: 9, cellPadding: 3 },
@@ -129,7 +129,7 @@ export const exportToPDF = (trip: SavedItinerary) => {
     margin: { left: 15 }
   });
 
-  yPos = (doc as any).lastAutoTable.finalY + 15;
+  yPos = ((doc as any).lastAutoTable?.finalY || yPos) + 15;
 
   // Budget Allocation
   if (trip.data.logistics.budgetAllocation) {
@@ -147,7 +147,7 @@ export const exportToPDF = (trip: SavedItinerary) => {
       ['TOTAL ESTIMATED', `${symbol}${totalBudget.toLocaleString()}`]
     ];
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: yPos,
       body: budgetData,
       theme: 'grid',
