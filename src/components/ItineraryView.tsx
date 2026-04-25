@@ -13,9 +13,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { SocialShare } from './SocialShare';
 import { exportToPDF } from '../services/pdfExport';
 import { modifyItinerary } from '../services/ai';
-import Map, { Marker, Source, Layer } from 'react-map-gl/maplibre';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import maplibregl from 'maplibre-gl';
+import { ExpeditionMap } from './ExpeditionMap';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { getTripImage } from '../constants';
 
@@ -173,14 +171,6 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
   };
 
   const shareUrl = `${window.location.origin}/?trip=${trip.id}`;
-  const validDays = trip.data.dailyPlan.filter(d => d.latitude && d.longitude);
-  const routeFeatures: any = {
-    type: 'FeatureCollection',
-    features: [{
-      type: 'Feature',
-      geometry: { type: 'LineString', coordinates: validDays.map(d => [d.longitude, d.latitude]) }
-    }]
-  };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] pb-24 font-sans selection:bg-primary/30">
@@ -368,105 +358,8 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
             </div>
           </div>
           
-          <div className="w-full h-[500px] md:h-[650px] rounded-[2rem] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.2)] border-4 border-stone-800 bg-[#0d1117] relative">
-             <Map
-               mapLib={maplibregl}
-               initialViewState={{
-                 longitude: trip.data.dailyPlan.find(d => d.longitude)?.longitude || 17.0658,
-                 latitude: trip.data.dailyPlan.find(d => d.latitude)?.latitude || -22.5609,
-                 zoom: 5.5,
-                 pitch: 60,
-                 bearing: 20
-               }}
-               mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
-               interactive={true}
-               attributionControl={false}
-             >
-                <Source id="routeData" type="geojson" data={routeFeatures}>
-                   {/* Outer Glow */}
-                   <Layer 
-                     id="routeLayerGlow" 
-                     type="line" 
-                     paint={{ "line-color": "#94a3b8", "line-width": 14, "line-opacity": 0.2, "line-blur": 10 }}
-                   />
-                   {/* Inner Solid Line */}
-                   <Layer 
-                     id="routeLayerLineBase" 
-                     type="line" 
-                     paint={{ "line-color": "#cbd5e1", "line-width": 6, "line-opacity": 0.9 }}
-                   />
-                   {/* Dashed Overlay */}
-                   <Layer 
-                     id="routeLayer" 
-                     type="line" 
-                     paint={{ "line-color": "#ffffff", "line-width": 3, "line-opacity": 1, "line-dasharray": [2, 3] }}
-                   />
-                </Source>
-
-                {trip.data.dailyPlan.map(day => day.waypoints?.map((wp, i) => (
-                  <Marker key={`wp-${day.day}-${i}`} longitude={wp.longitude} latitude={wp.latitude} anchor="bottom">
-                    <div className="flex flex-col items-center group cursor-pointer hover:z-30 relative transition-transform hover:scale-125">
-                       <div className="bg-stone-900 text-amber-400 border border-amber-500/30 text-xs font-black px-4 py-2 rounded-xl mb-2 shadow-[0_0_15px_rgba(245,158,11,0.5)] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                          {wp.name}
-                       </div>
-                       <div className={`w-10 h-10 rounded-full border-2 shadow-[0_0_20px_rgba(0,0,0,0.5)] flex items-center justify-center ${
-                         wp.type === 'fuel' ? 'bg-red-500/20 border-red-500 backdrop-blur-md animate-pulse' : 
-                         wp.type === 'meal' ? 'bg-orange-500/20 border-orange-500 backdrop-blur-md' : 
-                         'bg-blue-500/20 border-blue-500 backdrop-blur-md'
-                       }`}>
-                          {wp.type === 'fuel' ? <Fuel className="w-5 h-5 text-red-500 drop-shadow-md" /> : 
-                           wp.type === 'meal' ? <Utensils className="w-5 h-5 text-orange-500 drop-shadow-md" /> : 
-                           <Compass className="w-5 h-5 text-blue-500 drop-shadow-md" />}
-                       </div>
-                       {wp.type === 'fuel' && (
-                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-2 w-14 h-14 bg-red-500 rounded-full opacity-20 animate-ping pointer-events-none"></div>
-                       )}
-                    </div>
-                  </Marker>
-                )))}
-
-                {Object.values(
-                  trip.data.dailyPlan.filter(d => d.latitude && d.longitude).reduce((acc: Record<string, any[]>, day) => {
-                    const key = `${day.latitude!.toFixed(3)},${day.longitude!.toFixed(3)}`;
-                    if (!acc[key]) acc[key] = [];
-                    acc[key].push(day);
-                    return acc;
-                  }, {})
-                ).map((group: any[], idx) => {
-                  const firstDay = group[0];
-                  const daysLabel = group.map(d => d.day).join(', ');
-                  const title = group.map(d => d.location).find(l => l) || firstDay.location;
-
-                  return (
-                    <Marker 
-                      key={`group-${idx}`}
-                      longitude={firstDay.longitude!} 
-                      latitude={firstDay.latitude!}
-                      anchor="bottom"
-                      onClick={(e) => {
-                         e.originalEvent.stopPropagation();
-                         document.getElementById(`day-${firstDay.day}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }}
-                    >
-                      <div className="flex flex-col items-center group cursor-pointer transition-transform duration-300 hover:scale-[1.15] relative hover:z-40 mt-4">
-                         <div className="bg-stone-900 text-amber-400 border border-amber-500/30 text-[12px] font-black uppercase px-4 py-2 rounded-2xl mb-2 shadow-[0_0_20px_rgba(0,0,0,0.8)] opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20 flex gap-2 items-center pointer-events-none">
-                            Day {daysLabel}: {title}
-                         </div>
-                         <div className="w-14 h-14 bg-amber-500/20 rounded-full absolute top-[calc(100%-3rem)] left-1/2 -translate-x-1/2 animate-ping" />
-                         <div className={`w-14 h-14 rounded-full flex items-center justify-center border-[4px] shadow-[0_0_30px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all duration-300 relative z-10 ${
-                          activeDay === firstDay.day 
-                            ? 'bg-primary border-white scale-110 shadow-[0_0_30px_rgba(59,130,246,0.6)] text-white' 
-                            : 'bg-stone-900/80 border-stone-500 group-hover:border-primary group-hover:bg-stone-800 text-stone-300 group-hover:text-primary'
-                        }`}>
-                            <span className="text-lg font-black tracking-tighter">
-                              {daysLabel.length > 3 ? `${group[0].day}-${group[group.length-1].day}` : daysLabel}
-                            </span>
-                         </div>
-                      </div>
-                    </Marker>
-                  );
-                })}
-             </Map>
+          <div className="w-full h-[500px] md:h-[650px] rounded-[2rem] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.2)] border-4 border-stone-800 bg-[#f8f9fa] relative">
+             <ExpeditionMap data={trip.data} />
           </div>
         </div>
 

@@ -4,9 +4,10 @@ import {
   ChevronRight, ChevronLeft, Plane, Map as MapIcon, CheckCircle2, Home, Activity, DollarSign, Calendar, Smile
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import Map, { Marker } from 'react-map-gl/maplibre';
-import 'maplibre-gl/dist/maplibre-gl.css';
-import maplibregl from 'maplibre-gl';
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { NAMIBIA_REGIONS, PACE_OPTIONS, BUDGET_OPTIONS, DETAIL_LEVELS, MONTHS, INTERESTS_CATALOG, VEHICLE_OPTIONS, ACCOMMODATION_STYLES, TRIP_MOODS } from '../constants';
 import { TripConfig, Traveler, PickupPoint } from '../types';
 import { auth, db } from '../lib/firebase';
@@ -76,6 +77,13 @@ const RegionDetailsPanel = ({ isSelected }: { isSelected: string[] }) => {
   );
 };
 
+const MapEventsHandler = ({ onRightClick }: { onRightClick: (e: any) => void }) => {
+  useMapEvents({
+    contextmenu: onRightClick,
+  });
+  return null;
+};
+
 export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
   const [user] = useAuthState(auth);
   const [preferredCurrency, setPreferredCurrency] = useState('USD');
@@ -95,6 +103,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
       budgetPriorities: [],
       pace: 'Moderate (The standard balance of driving and doing)',
       detailLevel: 'standard',
+      startingLocation: 'Hosea Kutako International Airport (WDH)',
       accommodationStyles: []
     }
   });
@@ -275,45 +284,54 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     )}
                     
                     <div className="relative w-full aspect-[4/5] bg-[#E8E6E1] rounded-[3rem] shadow-inner border border-stone-200 overflow-hidden flex-1 group">
-                      <Map
-                        mapLib={maplibregl}
-                        initialViewState={{ longitude: 17.5, latitude: -22.5, zoom: 4.2 }}
-                        mapStyle="https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json"
-                        interactive={true}
+                      <MapContainer 
+                        center={[-22.5, 17.5]} 
+                        zoom={5} 
+                        style={{ height: '100%', width: '100%' }}
                         attributionControl={false}
-                        onContextMenu={addCustomPickup}
                       >
+                         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                         
+                         <MapEventsHandler onRightClick={(e: any) => {
+                            const { lat, lng } = e.latlng;
+                            addCustomPickup({ lngLat: { lng, lat }, originalEvent: e.originalEvent });
+                         }} />
+
                          {NAMIBIA_REGIONS.map(r => {
                            const isSelected = config.selectedRegions.includes(r.id);
+                           const iconMarkup = renderToStaticMarkup(
+                             <div 
+                               className={`relative group transition-transform duration-300 hover:scale-125 z-10`}
+                               onMouseEnter={() => window.dispatchEvent(new CustomEvent('regionHover', { detail: r }))}
+                             >
+                                {isSelected && <div className="absolute -inset-2 bg-primary rounded-full animate-pulse opacity-30"></div>}
+                                <div className={`w-8 h-8 rounded-full border-2 shadow-lg flex items-center justify-center transition-all ${isSelected ? 'bg-primary border-white scale-110' : 'bg-white border-stone-300 rotate-0'}`}>
+                                   {isSelected ? <CheckCircle2 className="w-4 h-4 text-white" /> : <r.icon className="w-4 h-4 text-stone-600" />}
+                                </div>
+                             </div>
+                           );
+
                            return (
                              <Marker 
                                key={r.id} 
-                               longitude={r.lng!} 
-                               latitude={r.lat!}
-                               anchor="center"
-                               onClick={(e) => {
-                                 e.originalEvent.stopPropagation();
-                                 toggleRegion(r.id);
+                               position={[r.lat!, r.lng!]}
+                               icon={L.divIcon({ html: iconMarkup, className: '', iconSize: [32, 32], iconAnchor: [16, 16] })}
+                               eventHandlers={{
+                                 click: (e) => {
+                                   L.DomEvent.stopPropagation(e);
+                                   toggleRegion(r.id);
+                                 },
+                                 mouseover: () => window.dispatchEvent(new CustomEvent('regionHover', { detail: r })),
+                                 mouseout: () => window.dispatchEvent(new CustomEvent('regionHover', { detail: null }))
                                }}
-                             >
-                                <div 
-                                  className={`relative group cursor-pointer transition-transform duration-300 hover:scale-125 z-10`}
-                                  onMouseEnter={() => window.dispatchEvent(new CustomEvent('regionHover', { detail: r }))}
-                                  onMouseLeave={() => window.dispatchEvent(new CustomEvent('regionHover', { detail: null }))}
-                                >
-                                   {isSelected && <div className="absolute -inset-2 bg-primary rounded-full animate-pulse opacity-30"></div>}
-                                   <div className={`w-8 h-8 rounded-full border-2 shadow-lg flex items-center justify-center transition-all ${isSelected ? 'bg-primary border-white scale-110' : 'bg-white border-stone-300 rotate-0'}`}>
-                                      {isSelected ? <CheckCircle2 className="w-4 h-4 text-white" /> : <r.icon className="w-4 h-4 text-stone-600" />}
-                                   </div>
-                                </div>
-                             </Marker>
+                             />
                            );
                          })}
 
                          {/* Custom Pickups Markers */}
-                         {config.customPickups.map((p) => (
-                           <Marker key={p.id} longitude={p.lng} latitude={p.lat} anchor="bottom">
-                              <div className="flex flex-col items-center group cursor-pointer relative z-20 transition-transform hover:scale-110">
+                         {config.customPickups.map((p) => {
+                            const pickupMarkup = renderToStaticMarkup(
+                              <div className="flex flex-col items-center group relative z-20">
                                  <div className="bg-stone-900 text-white border border-stone-700 text-[10px] font-bold px-2 py-1 rounded-lg mb-1 shadow-xl whitespace-nowrap">
                                     {p.type === 'start' ? 'Start' : `Stop ${p.order}`}
                                  </div>
@@ -321,9 +339,16 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                                     <MapPin className="w-3 h-3 text-white" />
                                  </div>
                               </div>
-                           </Marker>
-                         ))}
-                      </Map>
+                            );
+                            return (
+                              <Marker 
+                                key={p.id} 
+                                position={[p.lat, p.lng]} 
+                                icon={L.divIcon({ html: pickupMarkup, className: '', iconSize: [100, 50], iconAnchor: [50, 45] })}
+                              />
+                            );
+                         })}
+                      </MapContainer>
                     </div>
                   </div>
                   
@@ -698,15 +723,18 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                         />
                       </div>
                     </div>
-                    <div className="space-y-3">
-                      <label className="text-xs font-black uppercase text-stone-400">Month</label>
-                      <select 
-                        className="w-full p-4 border border-stone-200 focus:border-primary outline-none transition rounded-xl font-bold"
-                        value={config.logistics.month}
-                        onChange={e => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, month: e.target.value } }))}
-                      >
-                        {MONTHS.map(m => <option key={m} value={m}>{m}</option>)}
-                      </select>
+                    <div className="space-y-3 md:col-span-2">
+                      <label className="text-xs font-black uppercase text-stone-400">Expedition Starting Point</label>
+                      <div className="relative">
+                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
+                        <input 
+                          type="text" 
+                          placeholder="e.g. Windhoek Airport, your hotel name, or city"
+                          className="w-full p-4 pl-12 border border-stone-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition rounded-xl font-bold"
+                          value={config.logistics.startingLocation || ''}
+                          onChange={e => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, startingLocation: e.target.value } }))}
+                        />
+                      </div>
                     </div>
                     <div className="space-y-3 md:col-span-2">
                       <label className="text-xs font-black uppercase text-stone-400">Total Group Budget (Calculated)</label>

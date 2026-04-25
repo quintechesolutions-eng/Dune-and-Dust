@@ -1,9 +1,9 @@
 import { OpenRouter } from "@openrouter/sdk";
 import { TripConfig, ItineraryData } from "../types";
 import { ACTIVITIES_DATA } from "../activities-data";
-import { getNearbyPlaces, FoursquarePlace } from "./foursquare";
+import { getNearbyOSMPlaces, OSMPlace } from "./osm";
 
-const MAJOR_HUBS = ['Windhoek', 'Swakopmund', 'Walvis Bay', 'Luderitz', 'Rundu'];
+const MAJOR_HUBS = ['Windhoek', 'Swakopmund', 'Walvis Bay', 'Luderitz', 'Rundu', 'Etosha', 'Sesriem'];
 
 const openrouter = new OpenRouter({ apiKey: process.env.GEMINI_API_KEY as string });
 
@@ -184,8 +184,8 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
 
   try {
     const data = JSON.parse(text) as ItineraryData;
-    // Enrich with real-world places sparingly
-    return await enrichItineraryWithFoursquare(data);
+    // Enrich with real-world places sparingly from multiple sources
+    return await enrichItineraryWithRealWorldData(data);
   } catch (err) {
     console.error("Failed to parse AI response as JSON:", text);
     throw err;
@@ -193,36 +193,51 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
 };
 
 /**
- * Enriches the itinerary with real-world data from Foursquare for major hubs.
- * This improves accuracy and ensures real restaurant names are used.
+ * Enriches the itinerary with real-world data from OpenStreetMap.
+ * This ensures even remote areas have some real landmarks and fuel stops.
  */
-async function enrichItineraryWithFoursquare(data: ItineraryData): Promise<ItineraryData> {
+async function enrichItineraryWithRealWorldData(data: ItineraryData): Promise<ItineraryData> {
   const enrichedPlan = await Promise.all(data.dailyPlan.map(async (day) => {
-    // Only enrich major hubs to save API costs and respect limits
-    const isMajorHub = MAJOR_HUBS.some(hub => day.location.includes(hub));
-    
-    if (isMajorHub && day.latitude && day.longitude) {
-      const places = await getNearbyPlaces(day.latitude, day.longitude, '13000,10000', 3);
-      
-      if (places.length > 0) {
-        // Improve meals with real names
-        const restaurant = places.find(p => p.categories.some(c => c.name.toLowerCase().includes('restaurant')));
-        const cafe = places.find(p => p.categories.some(c => c.name.toLowerCase().includes('cafe')));
-        
-        if (restaurant) {
-          day.meals.dinner = `${restaurant.name} (Rated ${restaurant.rating}/10) - Highly recommended local dining.`;
-        }
-        if (cafe) {
-          day.meals.lunch = `Quick bite at ${cafe.name} (Rated ${cafe.rating}/10).`;
-        }
+    if (!day.latitude || !day.longitude) return day;
 
-        // Add a real activity if needed
-        const nightlifeOrArt = places.find(p => p.categories.some(c => !c.name.toLowerCase().includes('restaurant')));
-        if (nightlifeOrArt && !day.activities.some(a => a.includes(nightlifeOrArt.name))) {
-          day.activities.push(`Visit ${nightlifeOrArt.name} (${nightlifeOrArt.categories[0]?.name || 'Local Spot'})`);
+    // Fetch from OSM
+    const osmPlaces = await getNearbyOSMPlaces(day.latitude, day.longitude, 10000); // 10km radius
+    
+    if (!day.waypoints) day.waypoints = [];
+
+    // Process OSM results
+    if (osmPlaces.length > 0) {
+      // Find a viewpoint or campsite if the AI was vague
+      const viewpoint = osmPlaces.find(p => p.tags.tourism === 'viewpoint');
+      if (viewpoint && viewpoint.tags.name && !day.activities.some(a => a.includes(viewpoint.tags.name!))) {
+        day.activities.push(`Panoramic views from ${viewpoint.tags.name} (Local Landmark)`);
+        day.waypoints.push({ type: 'activity', name: viewpoint.tags.name, latitude: viewpoint.lat, longitude: viewpoint.lon });
+      }
+
+      // Add fuel stops - CRITICAL
+      const fuel = osmPlaces.find(p => p.tags.amenity === 'fuel');
+      if (fuel && fuel.tags.name) {
+        day.fuelStopRecommendations = `Refuel at ${fuel.tags.name} (${day.location}).`;
+        day.waypoints.push({ type: 'fuel', name: fuel.tags.name, latitude: fuel.lat, longitude: fuel.lon });
+      }
+
+      // Find local restaurants or pubs
+      if (day.meals.dinner.includes('AI Suggested') || day.meals.dinner.length < 15) {
+        const osmResto = osmPlaces.find(p => p.tags.amenity === 'restaurant' || p.tags.amenity === 'pub' || p.tags.amenity === 'cafe');
+        if (osmResto && osmResto.tags.name) {
+          day.meals.dinner = `Dine at ${osmResto.tags.name} (Local Discovery).`;
+          day.waypoints.push({ type: 'meal', name: osmResto.tags.name, latitude: osmResto.lat, longitude: osmResto.lon });
         }
       }
+      
+      // If we found a cafe but no dinner resto, use it for lunch
+      const osmCafe = osmPlaces.find(p => p.tags.amenity === 'cafe');
+      if (osmCafe && osmCafe.tags.name && (day.meals.lunch.includes('AI Suggested') || day.meals.lunch.length < 15)) {
+        day.meals.lunch = `Quick bite at ${osmCafe.tags.name}.`;
+        day.waypoints.push({ type: 'meal', name: osmCafe.tags.name, latitude: osmCafe.lat, longitude: osmCafe.lon });
+      }
     }
+
     return day;
   }));
 
@@ -323,7 +338,7 @@ export const generateFromDescription = async (
 
   try {
     const data = cleanAndParseJSON(text) as ItineraryData;
-    return await enrichItineraryWithFoursquare(data);
+    return await enrichItineraryWithRealWorldData(data);
   } catch (err) {
     console.error("Failed to parse AI response as JSON:", text);
     throw err;
@@ -427,7 +442,7 @@ export const modifyItinerary = async (
 
   try {
     const data = cleanAndParseJSON(text) as ItineraryData;
-    return await enrichItineraryWithFoursquare(data);
+    return await enrichItineraryWithRealWorldData(data);
   } catch (err) {
     console.error("Failed to parse AI modification response:", text);
     throw err;

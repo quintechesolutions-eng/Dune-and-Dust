@@ -107,7 +107,8 @@ export const exportToPDF = (trip: SavedItinerary) => {
     { label: 'DURATION', val: `${trip.data.dailyPlan.length} Days` },
     { label: 'DISTANCE', val: `${trip.data.tripSummary.totalEstimatedDistanceKm} km` },
     { label: 'BUDGET', val: `${symbol}${totalBudget.toLocaleString()}` },
-    { label: 'PACE', val: trip.config?.logistics?.pace || 'Balanced' }
+    { label: 'PACE', val: trip.config?.logistics?.pace || 'Balanced' },
+    { label: 'START', val: trip.config?.logistics?.startingLocation || 'Windhoek' }
   ];
 
   let xPos = 15;
@@ -153,6 +154,64 @@ export const exportToPDF = (trip: SavedItinerary) => {
   } else {
     yPos += 10;
   }
+
+  // --- EXPEDITION MAP (2D) ---
+  yPos = addSectionHeader('Expedition Map', yPos);
+  
+  // Drawing a simplified 2D map path
+  const mapWidth = 180;
+  const mapHeight = 80;
+  doc.setFillColor(245, 245, 245);
+  doc.roundedRect(15, yPos, mapWidth, mapHeight, 3, 3, 'F');
+  doc.setDrawColor(220, 220, 220);
+  doc.rect(15, yPos, mapWidth, mapHeight, 'S');
+
+  // Simple coordinate mapping
+  const points = trip.data.dailyPlan.filter(d => d.latitude && d.longitude);
+  if (points.length > 1) {
+    const lats = points.map(p => p.latitude!);
+    const lons = points.map(p => p.longitude!);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLon = Math.min(...lons);
+    const maxLon = Math.max(...lons);
+
+    const mapScale = (v: number, min: number, max: number, size: number) => {
+      if (max === min) return size / 2;
+      return ((v - min) / (max - min)) * size;
+    };
+
+    doc.setDrawColor(...colors.primary);
+    doc.setLineWidth(1);
+    
+    points.forEach((p, i) => {
+      const x = 15 + 10 + mapScale(p.longitude!, minLon, maxLon, mapWidth - 20);
+      const y = yPos + mapHeight - 10 - mapScale(p.latitude!, minLat, maxLat, mapHeight - 20);
+      
+      if (i > 0) {
+        const prevP = points[i-1];
+        const prevX = 15 + 10 + mapScale(prevP.longitude!, minLon, maxLon, mapWidth - 20);
+        const prevY = yPos + mapHeight - 10 - mapScale(prevP.latitude!, minLat, maxLat, mapHeight - 20);
+        doc.line(prevX, prevY, x, y);
+      }
+      
+      // Stop marker
+      doc.setFillColor(...colors.secondary);
+      doc.circle(x, y, 1.5, 'F');
+      
+      // Label first and last
+      if (i === 0 || i === points.length - 1) {
+        doc.setFontSize(6);
+        doc.setTextColor(...colors.secondary);
+        doc.text(p.location, x + 3, y);
+      }
+    });
+
+    doc.setFontSize(7);
+    doc.setTextColor(...colors.muted);
+    doc.text('Schematic 2D Projection of Route', 105, yPos + mapHeight - 4, { align: 'center' });
+  }
+  yPos += mapHeight + 15;
 
   // --- THE JOURNEY (DETAILED DAY CARDS) ---
   yPos = addSectionHeader('Detailed Itinerary', yPos);
