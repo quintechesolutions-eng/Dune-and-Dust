@@ -19,6 +19,9 @@ export interface Vehicle {
 export interface Logistics {
   days: number;
   month: string;
+  startDate?: string;
+  endDate?: string;
+  mood?: string;
   budget: string;
   budgetPriorities: string[];
   pace: string;

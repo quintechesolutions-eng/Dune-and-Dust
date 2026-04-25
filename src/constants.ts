@@ -1,4 +1,4 @@
-import { Bird, Palmtree, Mountain, Sun, Waves, MapPin, Tent } from 'lucide-react';
+import { Bird, Palmtree, Mountain, Sun, Waves, MapPin, Tent, Camera, Users, Heart } from 'lucide-react';
 import { ACTIVITIES_DATA } from './activities-data';
 
 export const APP_NAME = "DUNE & DUST";
@@ -50,6 +50,15 @@ export const PACE_OPTIONS = [
   { id: 'moderate', label: 'Moderate (The standard balance of driving and doing)', image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=400&q=80' },
   { id: 'fast', label: 'Fast (Early mornings, long drives, seeing it all)', image: 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=400&q=80' },
   { id: 'insane', label: 'Insane (Dawn till dusk driving, maximum coverage)', image: 'https://images.unsplash.com/photo-1522881113591-b0e6df297298?auto=format&fit=crop&w=400&q=80' }
+];
+
+export const TRIP_MOODS = [
+  { id: 'adventure', name: 'High Adventure', icon: Mountain, desc: 'Active, rugged, and adrenaline-pumping.' },
+  { id: 'relaxation', name: 'Relaxation & Spa', icon: Sun, desc: 'Slow-paced, luxurious, and peaceful.' },
+  { id: 'wildlife', name: 'Wildlife Focus', icon: Bird, desc: 'Maximum time spent on safaris and nature.' },
+  { id: 'photography', name: 'Photography', icon: Camera, desc: 'Optimized for the best light and iconic views.' },
+  { id: 'cultural', name: 'Cultural Immersion', icon: Users, desc: 'Focus on local communities and history.' },
+  { id: 'romantic', name: 'Romantic / Honeymoon', icon: Heart, desc: 'Private, scenic, and intimate settings.' }
 ];
 
 // Expanded Interests Catalog

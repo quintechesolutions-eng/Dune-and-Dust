@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { 
   MapPin, Users, Car, Heart, Settings, Plus, Trash2, Fuel, 
-  ChevronRight, ChevronLeft, Plane, Map as MapIcon, CheckCircle2, Home, Activity, DollarSign
+  ChevronRight, ChevronLeft, Plane, Map as MapIcon, CheckCircle2, Home, Activity, DollarSign, Calendar, Smile
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Map, { Marker } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibregl from 'maplibre-gl';
-import { NAMIBIA_REGIONS, PACE_OPTIONS, BUDGET_OPTIONS, DETAIL_LEVELS, MONTHS, INTERESTS_CATALOG, VEHICLE_OPTIONS, ACCOMMODATION_STYLES } from '../constants';
+import { NAMIBIA_REGIONS, PACE_OPTIONS, BUDGET_OPTIONS, DETAIL_LEVELS, MONTHS, INTERESTS_CATALOG, VEHICLE_OPTIONS, ACCOMMODATION_STYLES, TRIP_MOODS } from '../constants';
 import { TripConfig, Traveler, PickupPoint } from '../types';
 import { auth, db } from '../lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
@@ -559,6 +559,25 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     </div>
                   ) : (
                     <>
+                      <div className="mb-8">
+                        <label className="text-xs font-black uppercase text-stone-400 mb-4 block">Select Trip Mood</label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {TRIP_MOODS.map(m => (
+                            <button
+                              key={m.id}
+                              onClick={() => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, mood: m.name } }))}
+                              className={`p-4 rounded-2xl border-2 text-left transition-all flex flex-col gap-2 ${config.logistics.mood === m.name ? 'border-amber-600 bg-amber-50 shadow-md' : 'border-stone-100 bg-stone-50 hover:border-amber-200'}`}
+                            >
+                              <m.icon className={`w-5 h-5 ${config.logistics.mood === m.name ? 'text-amber-600' : 'text-stone-400'}`} />
+                              <div>
+                                <h4 className="font-bold text-sm leading-tight">{m.name}</h4>
+                                <p className="text-[10px] text-stone-500 font-medium">{m.desc}</p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       <div className="flex gap-2 mb-6 bg-stone-100 p-1.5 rounded-xl w-max border border-stone-200">
                         <button onClick={() => setActivitySort('all')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${activitySort === 'all' ? 'bg-white shadow text-stone-900' : 'text-stone-500'}`}>All</button>
                         <button onClick={() => setActivitySort('free')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1 ${activitySort === 'free' ? 'bg-white shadow text-emerald-600' : 'text-stone-500'}`}><DollarSign className="w-3 h-3"/> Free & Low Cost</button>
@@ -641,6 +660,43 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                         value={config.logistics.days}
                         onChange={e => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, days: Number(e.target.value) } }))}
                       />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-xs font-black uppercase text-stone-400">Start Date</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
+                        <input 
+                          type="date" 
+                          className="w-full p-4 pl-12 border border-stone-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition rounded-xl font-bold"
+                          value={config.logistics.startDate || ''}
+                          onChange={e => {
+                            const start = e.target.value;
+                            const days = config.logistics.days || 1;
+                            const end = new Date(start);
+                            end.setDate(end.getDate() + days);
+                            setConfig(prev => ({ 
+                              ...prev, 
+                              logistics: { 
+                                ...prev.logistics, 
+                                startDate: start,
+                                endDate: end.toISOString().split('T')[0]
+                              } 
+                            }));
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-xs font-black uppercase text-stone-400">End Date (Calculated)</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400 opacity-50" />
+                        <input 
+                          type="date" 
+                          readOnly
+                          className="w-full p-4 pl-12 border border-stone-200 bg-stone-50 text-stone-500 outline-none transition rounded-xl font-bold"
+                          value={config.logistics.endDate || ''}
+                        />
+                      </div>
                     </div>
                     <div className="space-y-3">
                       <label className="text-xs font-black uppercase text-stone-400">Month</label>

@@ -3,7 +3,7 @@ import { db, auth } from '../lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { SavedItinerary } from '../types';
-import { Calendar, Trash2, Share2, Eye, EyeOff, Compass, Heart, Download, Car, Navigation as NavIcon, Clock } from 'lucide-react';
+import { Calendar, Trash2, Share2, Eye, EyeOff, Compass, Heart, Download, Car, Navigation as NavIcon, Clock, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { exportToPDF } from '../services/pdfExport';
 import { getTripImage } from '../constants';
@@ -77,7 +77,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
   );
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4">
+    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
         <div>
           <h1 className="text-5xl font-black text-stone-900 tracking-tight mb-2">Mission Control</h1>
@@ -90,6 +90,60 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
           </div>
         </div>
       </div>
+
+      {/* Upcoming Trips & Countdown Section */}
+      {(() => {
+        const now = new Date();
+        const upcoming = trips
+          .filter(t => t.config?.logistics?.startDate && new Date(t.config.logistics.startDate) > now)
+          .sort((a, b) => new Date(a.config!.logistics.startDate!).getTime() - new Date(b.config!.logistics.startDate!).getTime());
+
+        if (upcoming.length > 0) {
+          return (
+            <div className="mb-16">
+              <h2 className="text-sm font-black text-stone-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                <Clock className="w-4 h-4 text-amber-500" /> Upcoming Migrations
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {upcoming.map(trip => {
+                  const daysLeft = Math.ceil((new Date(trip.config!.logistics.startDate!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                  return (
+                    <motion.div 
+                      key={trip.id}
+                      whileHover={{ y: -5 }}
+                      className="bg-gradient-to-br from-stone-900 to-stone-800 rounded-[2.5rem] p-8 text-white flex flex-col sm:flex-row items-center gap-8 shadow-2xl relative overflow-hidden group"
+                    >
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                      <div className="w-24 h-24 bg-white/10 rounded-3xl flex flex-col items-center justify-center shrink-0 border border-white/10 backdrop-blur-md">
+                         <span className="text-[10px] font-black uppercase text-amber-400 mb-1">Days To</span>
+                         <span className="text-4xl font-black tracking-tighter">{daysLeft}</span>
+                      </div>
+                      <div className="flex-1 text-center sm:text-left">
+                         <h3 className="text-2xl font-black mb-1 group-hover:text-primary transition-colors">{trip.title}</h3>
+                         <p className="text-stone-400 font-medium text-sm mb-4">Starting {new Date(trip.config!.logistics.startDate!).toLocaleDateString()}</p>
+                         <button 
+                           onClick={() => onViewTrip(trip)}
+                           className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-primary hover:text-white transition"
+                         >
+                           Open Pre-Trip Dashboard <ChevronRight className="w-4 h-4" />
+                         </button>
+                      </div>
+                      <div className="hidden sm:block absolute right-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                         <Compass className="w-24 h-24" />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        }
+        return null;
+      })()}
+
+      <h2 className="text-sm font-black text-stone-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+        <Compass className="w-4 h-4 text-primary" /> Expedition Archives
+      </h2>
 
       {trips.length === 0 ? (
         <motion.div 

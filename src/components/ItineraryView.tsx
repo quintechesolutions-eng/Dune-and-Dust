@@ -12,6 +12,7 @@ import { doc, runTransaction, getDoc, updateDoc, deleteDoc } from 'firebase/fire
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { SocialShare } from './SocialShare';
 import { exportToPDF } from '../services/pdfExport';
+import { modifyItinerary } from '../services/ai';
 import Map, { Marker, Source, Layer } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import maplibregl from 'maplibre-gl';
@@ -42,6 +43,16 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
   const baseCurrency = (trip as any).baseCurrency || trip.config?.baseCurrency || 'USD';
   const currencySymbols: Record<string, string> = { USD: '$', EUR: '€', GBP: '£', NAD: 'N$' };
   const symbol = currencySymbols[baseCurrency] || `${baseCurrency} `;
+
+  const [aiInstruction, setAiInstruction] = useState('');
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [showAiAssistant, setShowAiAssistant] = useState(false);
+  const [showAiReadyBadge, setShowAiReadyBadge] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowAiReadyBadge(false), 60000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // No conversion multipliers; AI already returned values in baseCurrency
   const formatCurrency = (val: number | undefined) => {
@@ -74,6 +85,39 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
     } catch (e) {
       console.error("Failed to save edits", e);
       alert("Failed to save your edits. Check console for details.");
+    }
+  };
+
+  const handleAiModify = async () => {
+    if (!aiInstruction.trim() || isAiProcessing) return;
+    setIsAiProcessing(true);
+    try {
+      const updatedData = await modifyItinerary(trip.data, aiInstruction, trip.config as any);
+      
+      // Update Firestore
+      await updateDoc(doc(db, 'itineraries', trip.id), {
+        data: updatedData,
+        title: updatedData.tripSummary.headline,
+        overview: updatedData.tripSummary.overview
+      });
+
+      // Update local state (refreshing the page or state would be ideal, but let's update local trip object for now)
+      trip.data = updatedData;
+      trip.title = updatedData.tripSummary.headline;
+      trip.overview = updatedData.tripSummary.overview;
+      
+      setEditedTitle(updatedData.tripSummary.headline);
+      setEditedOverview(updatedData.tripSummary.overview);
+      setEditedDailyPlan(updatedData.dailyPlan);
+      
+      setAiInstruction('');
+      setShowAiAssistant(false);
+      alert("Trip successfully modified by AI!");
+    } catch (e) {
+      console.error("AI modification failed", e);
+      alert("AI failed to modify the trip. Please try a different instruction.");
+    } finally {
+      setIsAiProcessing(false);
     }
   };
 
@@ -236,10 +280,10 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                </div>
              ) : (
                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
-                 <h1 className="text-5xl md:text-7xl font-black leading-[1.1] tracking-tight mb-8 drop-shadow-lg bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-white/70">
+                 <h1 className="text-4xl md:text-6xl font-black leading-[1.2] mb-8 drop-shadow-lg bg-clip-text text-transparent bg-gradient-to-br from-white via-white to-white/70 break-words">
                    {trip.title}
                  </h1>
-                 <p className="text-xl md:text-2xl text-stone-300 font-medium leading-relaxed max-w-3xl border-l-4 border-primary pl-6 py-2 bg-gradient-to-r from-stone-900/50 to-transparent">
+                 <p className="text-lg md:text-xl text-stone-300 font-medium leading-relaxed max-w-3xl border-l-4 border-primary pl-6 py-2 bg-gradient-to-r from-stone-900/50 to-transparent">
                    {trip.overview}
                  </p>
                </motion.div>
@@ -254,8 +298,8 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-12">
            {[ 
-             { icon: Users, label: "Pace", val: trip.config?.logistics?.pace?.split(' ')[0] || 'Standard', color: 'text-blue-500', bg: 'bg-blue-500/10' }, 
-             { icon: Car, label: "Budget Tier", val: trip.config?.logistics?.budget?.split(' ')[0] || 'Flexible', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+             { icon: Users, label: "Mood", val: trip.config?.logistics?.mood || 'Balanced', color: 'text-blue-500', bg: 'bg-blue-500/10' }, 
+             { icon: Calendar, label: "Dates", val: trip.config?.logistics?.startDate ? `${new Date(trip.config.logistics.startDate).toLocaleDateString()} - ${new Date(trip.config.logistics.endDate).toLocaleDateString()}` : 'Flexible', color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
              { icon: NavIcon, label: "Total Distance", val: `~${trip.data.tripSummary.totalEstimatedDistanceKm} km`, color: 'text-amber-500', bg: 'bg-amber-500/10' },
              { icon: Compass, label: "Days", val: `${trip.data.dailyPlan.length} Days`, color: 'text-purple-500', bg: 'bg-purple-500/10' }
            ].map((stat, i) => (
@@ -468,7 +512,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                           className="w-full bg-white border border-stone-200 rounded-xl px-4 py-3 text-3xl font-black text-stone-900 mb-6 focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                         />
                       ) : (
-                        <h3 className="text-4xl md:text-5xl font-black leading-[1.1] mb-8 tracking-tighter text-stone-900">{day.location}</h3>
+                        <h3 className="text-3xl md:text-4xl font-black leading-tight mb-8 text-stone-900 break-words">{day.location}</h3>
                       )}
                       
                       <div className="space-y-4 mb-10">
@@ -763,6 +807,73 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* AI Assistant Toggle & Panel */}
+      <div className="fixed bottom-8 right-8 z-[60] flex flex-col items-end gap-4">
+        <AnimatePresence>
+          {showAiAssistant && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-[2rem] shadow-2xl border border-stone-100 p-6 w-80 md:w-96 overflow-hidden relative"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                   <Compass className="w-6 h-6 text-white animate-pulse" />
+                </div>
+                <div>
+                  <h4 className="font-black text-stone-900">AI Trip Architect</h4>
+                  <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Assistant Online</p>
+                </div>
+                <button onClick={() => setShowAiAssistant(false)} className="ml-auto text-stone-400 hover:text-stone-600"><X className="w-5 h-5"/></button>
+              </div>
+
+              <p className="text-sm text-stone-500 mb-4 font-medium">
+                Ask me to add stops, change durations, or swap activities.
+              </p>
+
+              <div className="relative">
+                <textarea
+                  value={aiInstruction}
+                  onChange={e => setAiInstruction(e.target.value)}
+                  placeholder="e.g. Add 2 days in Swakopmund and add a skydiving activity..."
+                  className="w-full bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 text-sm font-medium text-stone-700 focus:outline-none focus:ring-2 focus:ring-primary min-h-[100px] resize-none"
+                />
+                <button
+                  disabled={isAiProcessing || !aiInstruction.trim()}
+                  onClick={handleAiModify}
+                  className="w-full mt-3 bg-stone-900 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-stone-800 transition disabled:opacity-50"
+                >
+                  {isAiProcessing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Compass className="w-4 h-4" />
+                      <span>Rewrite Itinerary</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <button 
+          onClick={() => setShowAiAssistant(!showAiAssistant)}
+          className={`w-16 h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 ${showAiAssistant ? 'bg-stone-900 text-white rotate-90' : 'bg-primary text-white'}`}
+        >
+          {showAiAssistant ? <X className="w-8 h-8" /> : <Compass className="w-8 h-8" />}
+          {!showAiAssistant && showAiReadyBadge && (
+            <div className="absolute -top-2 -right-2 bg-rose-500 text-white text-[10px] font-black px-2 py-1 rounded-full animate-bounce">
+              AI READY
+            </div>
+          )}
+        </button>
+      </div>
     </div>
   );
 };

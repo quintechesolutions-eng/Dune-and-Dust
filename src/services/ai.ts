@@ -78,6 +78,8 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     - Budget Priorities: ${config.logistics.budgetPriorities?.join(', ') || 'Standard'}
     ${config.logistics.specificAccommodation ? `- Specific Accommodation Requested by User: ${config.logistics.specificAccommodation}` : ''}
     - Pace: ${config.logistics.pace}
+    - Trip Mood: ${config.logistics.mood || 'Not specified'}
+    - Exact Dates: ${config.logistics.startDate ? `${config.logistics.startDate} to ${config.logistics.endDate}` : 'Not specified'}
     
     Selected Regions to Visit: ${config.selectedRegions.length > 0 ? config.selectedRegions.join(', ') : 'Suggest best locations'}.
     Specific Interests Requested: ${config.selectedInterests.join(', ')}.
@@ -102,6 +104,7 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     12. UNIQUENESS: Each itinerary should feel personal and unique. Suggest at least one surprising or unconventional activity the travelers wouldn't have thought of on their own.
     13. REAL-WORLD RESEARCH: You are expected to act as if you are searching live databases. Provide REAL pricing, REAL restaurant names, and REAL housing options. If a user names a town, center your research on that town's actual infrastructure.
     14. ACCURATE GEOLOCATION: Ensure the 'latitude' and 'longitude' for every daily stop are pinpoint accurate. Use the provided GEOGRAPHIC REFERENCE for major hubs.
+    15. DATES & MOOD: Center the itinerary flow around the requested MOOD (${config.logistics.mood || 'Balanced'}). If exact dates are provided, mention them in the daily breakdown headers if appropriate.
   `;
 
   const systemInstruction = `You are an elite Namibian travel architect. Output STRICTLY VALID JSON. DO NOT TRUNCATE YOUR RESPONSE.
@@ -279,6 +282,109 @@ export const generateFromDescription = async (
     return cleanAndParseJSON(text) as ItineraryData;
   } catch (err) {
     console.error("Failed to parse AI response as JSON:", text);
+    throw err;
+  }
+};
+
+/**
+ * Modifies an existing itinerary based on user instructions.
+ */
+export const modifyItinerary = async (
+  currentItinerary: ItineraryData,
+  instruction: string,
+  config: TripConfig
+): Promise<ItineraryData> => {
+  const outputSchemaStr = `{
+    "tripSummary": {
+      "headline": "string",
+      "overview": "string",
+      "travelerNotes": "string",
+      "totalEstimatedDistanceKm": "number",
+      "climateExpectancy": "string",
+      "wildlifeExpectancy": "string"
+    },
+    "logistics": {
+      "packingList": ["string"],
+      "fuelAdvice": "string",
+      "transportBookingQuery": "string",
+      "estimatedBudgetTotal": "number",
+      "budgetAllocation": {
+        "accommodation": "number",
+        "transportation": "number",
+        "food": "number",
+        "activities": "number"
+      }
+    },
+    "dailyPlan": [
+      {
+        "day": "number",
+        "location": "string",
+        "latitude": "number",
+        "longitude": "number",
+        "driveTimeHours": "string",
+        "roadConditions": "string",
+        "fuelStopRecommendations": "string",
+        "description": "string",
+        "activities": ["string"],
+        "meals": {
+          "breakfast": "string",
+          "lunch": "string",
+          "dinner": "string"
+        },
+        "accommodation": {
+          "name": "string",
+          "type": "string",
+          "bookingSearchQuery": "string",
+          "features": ["string"]
+        }
+      }
+    ]
+  }`;
+
+  const systemInstruction = `You are an elite Namibian travel architect. You will receive a CURRENT travel itinerary in JSON format and a USER INSTRUCTION on how to change it. Your goal is to produce a NEW, modified version of the JSON that incorporates those changes while maintaining the original quality and structure.
+
+    CRITICAL RULES:
+    1. Output ONLY the modified JSON. No commentary.
+    2. Maintain all real-world accuracy (coordinates, driving times).
+    3. If the user asks for a change that contradicts Namibian reality (e.g. "add a beach in Etosha"), explain why in the 'travelerNotes' section but do your best to fulfill the SPIRIT of the request (e.g. add a luxury pool day).
+    4. Ensure the dailyPlan array remains consistent in its numbering.
+
+    SCHEMA:
+    ${outputSchemaStr}`;
+
+  const prompt = `
+    CURRENT ITINERARY:
+    ${JSON.stringify(currentItinerary, null, 2)}
+
+    USER INSTRUCTION FOR CHANGES:
+    "${instruction}"
+
+    TRIP CONTEXT:
+    - Travelers: ${config?.travelers?.length || 1}
+    - Vehicle: ${config?.vehicle?.make || 'Standard 4x4'}
+    - Mood: ${config?.logistics?.mood || 'Balanced'}
+    - Dates: ${config?.logistics?.startDate || 'Not set'} to ${config?.logistics?.endDate || 'Not set'}
+
+    Apply the changes requested and return the full updated JSON.
+  `;
+
+  const response = await openrouter.chat.send({
+    chatRequest: {
+      model: "inclusionai/ling-2.6-flash:free",
+      messages: [
+        { role: "system", content: systemInstruction },
+        { role: "user", content: prompt }
+      ]
+    }
+  });
+
+  let text = response.choices?.[0]?.message?.content;
+  if (!text) throw new Error("Empty response from AI");
+
+  try {
+    return cleanAndParseJSON(text) as ItineraryData;
+  } catch (err) {
+    console.error("Failed to parse AI modification response:", text);
     throw err;
   }
 };
