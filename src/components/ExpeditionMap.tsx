@@ -22,6 +22,7 @@ L.Icon.Default.mergeOptions({
 
 interface ExpeditionMapProps {
   data: ItineraryData;
+  activeDay?: number;
 }
 
 const AntPathOverlay = ({ positions, options }: any) => {
@@ -35,6 +36,32 @@ const AntPathOverlay = ({ positions, options }: any) => {
       antPath.remove();
     };
   }, [map, positions, options]);
+  return null;
+};
+
+const MapController = ({ data, activeDay }: { data: ItineraryData, activeDay?: number }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (activeDay) {
+      const dayData = data.dailyPlan.find(d => d.day === activeDay);
+      if (dayData && dayData.latitude && dayData.longitude) {
+        map.flyTo([dayData.latitude, dayData.longitude], 12, { duration: 1.5 });
+      }
+    }
+  }, [activeDay, map, data]);
+
+  return null;
+};
+
+const ZoomToFit = ({ points, trigger }: { points: [number, number][], trigger: number }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (points.length > 0) {
+      const bounds = L.latLngBounds(points);
+      map.fitBounds(bounds, { padding: [50, 50], animate: true });
+    }
+  }, [map, points, trigger]);
   return null;
 };
 
@@ -56,7 +83,7 @@ const DAY_COLORS = [
   '#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4'
 ];
 
-export const ExpeditionMap: React.FC<ExpeditionMapProps> = ({ data }) => {
+export const ExpeditionMap: React.FC<ExpeditionMapProps> = ({ data, activeDay }) => {
   const [routes, setRoutes] = useState<Record<number, [number, number][]>>({});
   const [visibleLayers, setVisibleLayers] = useState({
     meals: true,
@@ -69,6 +96,22 @@ export const ExpeditionMap: React.FC<ExpeditionMapProps> = ({ data }) => {
     const fetchRoutes = async () => {
       const newRoutes: Record<number, [number, number][]> = {};
       
+      // 1. Leg from Starting Point to Day 1
+      if (data.tripSummary.startingPoint && data.dailyPlan.length > 0) {
+        const start = data.tripSummary.startingPoint;
+        const end = data.dailyPlan[0];
+        if (end.latitude && end.longitude) {
+          const geometry = await getOSRMRoute([
+            { lat: start.latitude, lng: start.longitude },
+            { lat: end.latitude, lng: end.longitude }
+          ]);
+          if (geometry) {
+            newRoutes[0] = geometry.coordinates.map(coord => [coord[1], coord[0]] as [number, number]);
+          }
+        }
+      }
+
+      // 2. Legs between daily stops
       for (let i = 0; i < data.dailyPlan.length - 1; i++) {
         const start = data.dailyPlan[i];
         const end = data.dailyPlan[i+1];
@@ -82,7 +125,6 @@ export const ExpeditionMap: React.FC<ExpeditionMapProps> = ({ data }) => {
           if (geometry) {
             newRoutes[start.day] = geometry.coordinates.map(coord => [coord[1], coord[0]] as [number, number]);
           } else {
-            // Fallback to straight line
             newRoutes[start.day] = [
               [start.latitude, start.longitude],
               [end.latitude, end.longitude]
@@ -101,8 +143,21 @@ export const ExpeditionMap: React.FC<ExpeditionMapProps> = ({ data }) => {
     ? [allPoints[0].latitude!, allPoints[0].longitude!]
     : [-22.5609, 17.0658];
 
+  const [zoomTrigger, setZoomTrigger] = useState(0);
+
   return (
     <div className="relative w-full h-full group">
+      {/* Interaction Controls */}
+      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+        <button 
+          onClick={() => setZoomTrigger(t => t + 1)}
+          className="bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-stone-200 hover:bg-white transition-all text-stone-700 hover:text-primary flex items-center justify-center"
+          title="Fit to Route"
+        >
+          <Compass className="w-5 h-5" />
+        </button>
+      </div>
+
       {/* Layer Toggles */}
       <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-stone-200">
         <h4 className="text-[10px] font-black uppercase text-stone-400 tracking-widest mb-1 px-1">Layers</h4>
@@ -132,12 +187,29 @@ export const ExpeditionMap: React.FC<ExpeditionMapProps> = ({ data }) => {
         center={center} 
         zoom={6} 
         style={{ height: '100%', width: '100%', borderRadius: '2rem' }}
-        scrollWheelZoom={false}
+        scrollWheelZoom={true}
+        zoomControl={false}
       >
+        <MapController data={data} activeDay={activeDay} />
+        <ZoomToFit points={allPoints.map(p => [p.latitude!, p.longitude!] as [number, number])} trigger={zoomTrigger} />
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        {data.tripSummary.startingPoint && (
+          <Marker 
+            position={[data.tripSummary.startingPoint.latitude, data.tripSummary.startingPoint.longitude]} 
+            icon={createCustomIcon(MapPin, '#9ca3af')}
+          >
+            <Popup>
+              <div className="p-1">
+                <span className="text-[10px] font-black uppercase text-stone-400 block">Starting Point</span>
+                <h4 className="font-bold text-stone-900">{data.tripSummary.startingPoint.location}</h4>
+              </div>
+            </Popup>
+          </Marker>
+        )}
 
         <MarkerClusterGroup chunkedLoading>
           {data.dailyPlan.map((day) => (

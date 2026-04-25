@@ -14,7 +14,12 @@ const outputSchemaStr = `{
     "travelerNotes": "string",
     "totalEstimatedDistanceKm": "number",
     "climateExpectancy": "string",
-    "wildlifeExpectancy": "string"
+    "wildlifeExpectancy": "string",
+    "startingPoint": {
+      "location": "string",
+      "latitude": "number",
+      "longitude": "number"
+    }
   },
   "logistics": {
     "packingList": ["string"],
@@ -108,6 +113,7 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     13. REAL-WORLD RESEARCH: You are expected to act as if you are searching live databases. Provide REAL pricing, REAL restaurant names, and REAL housing options. If a user names a town, center your research on that town's actual infrastructure.
     14. ACCURATE GEOLOCATION: Ensure the 'latitude' and 'longitude' for every daily stop are pinpoint accurate. Use the provided GEOGRAPHIC REFERENCE for major hubs.
     15. DATES & MOOD: Center the itinerary flow around the requested MOOD (${config.logistics.mood || 'Balanced'}). If exact dates are provided, mention them in the daily breakdown headers if appropriate.
+    16. STARTING POINT: You MUST provide coordinates for the starting location: ${config.logistics.startingLocation || 'Windhoek'}. Fill 'tripSummary.startingPoint' with its name, latitude, and longitude.
   `;
 
   const systemInstruction = `You are an elite Namibian travel architect. Output STRICTLY VALID JSON. DO NOT TRUNCATE YOUR RESPONSE.
@@ -161,6 +167,9 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
   text = text.replace(/^\`\`\`(json)?\s*/i, '').replace(/\`\`\`\s*$/i, '').trim();
   text = text.replace(/"\s*=>\s*/g, '": '); // Fixes "key" => value
   text = text.replace(/'\s*=>\s*/g, "': ");
+  
+  // Fix missing colons between key and value (common AI hallucination)
+  text = text.replace(/"([^"]+)"\s+([0-9"[{])/g, '"$1": $2');
   
   // Try to salvage truncated JSON (basic trailing closure)
   if (!text.endsWith('}')) {

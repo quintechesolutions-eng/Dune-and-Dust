@@ -373,7 +373,8 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                 id={`day-${day.day}`}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-100px" }}
+                onViewportEnter={() => setActiveDay(day.day)}
+                viewport={{ once: false, margin: "-200px" }}
                 key={idx} 
                 className="relative lg:pl-28 scroll-mt-[120px]"
               >

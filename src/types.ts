@@ -59,6 +59,11 @@ export interface ItineraryData {
     totalEstimatedDistanceKm: number;
     climateExpectancy?: string;
     wildlifeExpectancy?: string;
+    startingPoint?: {
+      location: string;
+      latitude: number;
+      longitude: number;
+    };
   };
   logistics: {
     packingList: string[];

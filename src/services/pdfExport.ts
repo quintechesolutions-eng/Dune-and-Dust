@@ -192,19 +192,23 @@ export const exportToPDF = (trip: SavedItinerary) => {
         const prevP = points[i-1];
         const prevX = 15 + 10 + mapScale(prevP.longitude!, minLon, maxLon, mapWidth - 20);
         const prevY = yPos + mapHeight - 10 - mapScale(prevP.latitude!, minLat, maxLat, mapHeight - 20);
+        
+        doc.setDrawColor(...colors.primary);
+        doc.setLineWidth(0.8);
         doc.line(prevX, prevY, x, y);
       }
       
-      // Stop marker
+      // Stop marker (Circle with Day Number)
       doc.setFillColor(...colors.secondary);
-      doc.circle(x, y, 1.5, 'F');
+      doc.circle(x, y, 2.8, 'F');
+      doc.setFontSize(5);
+      doc.setTextColor(255, 255, 255);
+      doc.text(String(p.day), x, y + 1.5, { align: 'center' });
       
-      // Label first and last
-      if (i === 0 || i === points.length - 1) {
-        doc.setFontSize(6);
-        doc.setTextColor(...colors.secondary);
-        doc.text(p.location, x + 3, y);
-      }
+      // Location Label
+      doc.setFontSize(5);
+      doc.setTextColor(...colors.muted);
+      doc.text(p.location, x + 4, y + 1);
     });
 
     doc.setFontSize(7);
