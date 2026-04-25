@@ -1,6 +1,9 @@
 import { OpenRouter } from "@openrouter/sdk";
 import { TripConfig, ItineraryData } from "../types";
 import { ACTIVITIES_DATA } from "../activities-data";
+import { getNearbyPlaces, FoursquarePlace } from "./foursquare";
+
+const MAJOR_HUBS = ['Windhoek', 'Swakopmund', 'Walvis Bay', 'Luderitz', 'Rundu'];
 
 const openrouter = new OpenRouter({ apiKey: process.env.GEMINI_API_KEY as string });
 
@@ -180,12 +183,52 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
   }
 
   try {
-    return JSON.parse(text) as ItineraryData;
+    const data = JSON.parse(text) as ItineraryData;
+    // Enrich with real-world places sparingly
+    return await enrichItineraryWithFoursquare(data);
   } catch (err) {
     console.error("Failed to parse AI response as JSON:", text);
     throw err;
   }
 };
+
+/**
+ * Enriches the itinerary with real-world data from Foursquare for major hubs.
+ * This improves accuracy and ensures real restaurant names are used.
+ */
+async function enrichItineraryWithFoursquare(data: ItineraryData): Promise<ItineraryData> {
+  const enrichedPlan = await Promise.all(data.dailyPlan.map(async (day) => {
+    // Only enrich major hubs to save API costs and respect limits
+    const isMajorHub = MAJOR_HUBS.some(hub => day.location.includes(hub));
+    
+    if (isMajorHub && day.latitude && day.longitude) {
+      const places = await getNearbyPlaces(day.latitude, day.longitude, '13000,10000', 3);
+      
+      if (places.length > 0) {
+        // Improve meals with real names
+        const restaurant = places.find(p => p.categories.some(c => c.name.toLowerCase().includes('restaurant')));
+        const cafe = places.find(p => p.categories.some(c => c.name.toLowerCase().includes('cafe')));
+        
+        if (restaurant) {
+          day.meals.dinner = `${restaurant.name} (Rated ${restaurant.rating}/10) - Highly recommended local dining.`;
+        }
+        if (cafe) {
+          day.meals.lunch = `Quick bite at ${cafe.name} (Rated ${cafe.rating}/10).`;
+        }
+
+        // Add a real activity if needed
+        const nightlifeOrArt = places.find(p => p.categories.some(c => !c.name.toLowerCase().includes('restaurant')));
+        if (nightlifeOrArt && !day.activities.some(a => a.includes(nightlifeOrArt.name))) {
+          day.activities.push(`Visit ${nightlifeOrArt.name} (${nightlifeOrArt.categories[0]?.name || 'Local Spot'})`);
+        }
+      }
+    }
+    return day;
+  }));
+
+  data.dailyPlan = enrichedPlan;
+  return data;
+}
 
 /**
  * Cleans raw AI text into valid JSON, repairing common model quirks.
@@ -279,7 +322,8 @@ export const generateFromDescription = async (
   if (!text) throw new Error("Empty response from AI");
 
   try {
-    return cleanAndParseJSON(text) as ItineraryData;
+    const data = cleanAndParseJSON(text) as ItineraryData;
+    return await enrichItineraryWithFoursquare(data);
   } catch (err) {
     console.error("Failed to parse AI response as JSON:", text);
     throw err;
@@ -382,7 +426,8 @@ export const modifyItinerary = async (
   if (!text) throw new Error("Empty response from AI");
 
   try {
-    return cleanAndParseJSON(text) as ItineraryData;
+    const data = cleanAndParseJSON(text) as ItineraryData;
+    return await enrichItineraryWithFoursquare(data);
   } catch (err) {
     console.error("Failed to parse AI modification response:", text);
     throw err;
