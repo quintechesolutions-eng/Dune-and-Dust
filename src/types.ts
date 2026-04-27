@@ -103,6 +103,14 @@ export interface ItineraryData {
       type: string;
       bookingSearchQuery: string;
       features?: string[];
+      listings?: Array<{
+        name: string;
+        price: number;
+        currency: string;
+        rating: number;
+        recommendationReason: string;
+      }>;
+      finalRecommendationReason?: string;
     };
   }>;
 }

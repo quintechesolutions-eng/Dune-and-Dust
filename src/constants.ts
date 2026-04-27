@@ -89,37 +89,21 @@ export const VEHICLE_OPTIONS = [
   { id: 'motorcycle', name: 'Adventure Motorcycle (e.g. BMW GS 1250)', drivetain: '2WD', fuel: 'Petrol', fuelL100km: 5, desc: 'For solo riders. Extreme freedom but requires experience.', image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80' },
   { id: 'ev_suv', name: 'Electric SUV (e.g. Tesla Model Y)', drivetain: 'AWD', fuel: 'Electric', fuelL100km: 0, desc: 'Limited to major corridors with charging. Not recommended for remote routes.', image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=800&q=80' },
 ];
-export const getTripImage = (title: string = '', location: string = '') => {
-  const text = (title + ' ' + location).toLowerCase();
+export const LANDSCAPE_IMAGES = [
+  'https://images.unsplash.com/photo-1520113412646-04fc68c0bc21?auto=format&fit=crop&w=1200&q=80', // Sossusvlei
+  'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80', // Wildlife
+  'https://images.unsplash.com/photo-1517409228833-c90a18bb7201?auto=format&fit=crop&w=1200&q=80', // Coast
+  'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=1200&q=80', // Damaraland
+  'https://images.unsplash.com/photo-1544474673-98485293297a?auto=format&fit=crop&w=1200&q=80', // Skeleton Coast
+  'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1200&q=80', // Caprivi
+  'https://images.unsplash.com/photo-1542314831-c6a4d14effca?auto=format&fit=crop&w=1200&q=80', // Luxury Lodge
+  'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?auto=format&fit=crop&w=1200&q=80', // Mountains
+];
+
+export const getTripImage = (title: string = '', location: string = '', index: number = 0) => {
+  const query = (location || title || 'Namibia Landscape').toLowerCase().replace(/\s+/g, ',');
   
-  if (text.includes('etosha') || text.includes('wildlife') || text.includes('safari') || text.includes('animal')) {
-    return 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80'; // Etosha/Wildlife
-  }
-  if (text.includes('sossusvlei') || text.includes('dune') || text.includes('desert') || text.includes('deadvlei') || text.includes('namib')) {
-    return 'https://images.unsplash.com/photo-1520113412646-04fc68c0bc21?auto=format&fit=crop&w=1200&q=80'; // Dunes
-  }
-  if (text.includes('swakopmund') || text.includes('walvis') || text.includes('coast') || text.includes('ocean') || text.includes('sea')) {
-    return 'https://images.unsplash.com/photo-1517409228833-c90a18bb7201?auto=format&fit=crop&w=1200&q=80'; // Coast
-  }
-  if (text.includes('skeleton') || text.includes('shipwreck') || text.includes('desolate')) {
-    return 'https://images.unsplash.com/photo-1544474673-98485293297a?auto=format&fit=crop&w=1200&q=80'; // Skeleton Coast
-  }
-  if (text.includes('damaraland') || text.includes('rock') || text.includes('mountain') || text.includes('twyfelfontein')) {
-    return 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=1200&q=80'; // Damaraland
-  }
-  if (text.includes('fish river') || text.includes('canyon') || text.includes('gorge')) {
-    return 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80'; // Canyon
-  }
-  if (text.includes('windhoek') || text.includes('city') || text.includes('urban')) {
-    return 'https://images.unsplash.com/photo-1517409228833-c90a18bb7201?auto=format&fit=crop&w=1200&q=80'; // Windhoek
-  }
-  if (text.includes('caprivi') || text.includes('zambezi') || text.includes('river') || text.includes('water')) {
-    return 'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1200&q=80'; // Caprivi
-  }
-  if (text.includes('luderitz') || text.includes('kolmanskop') || text.includes('ghost')) {
-    return 'https://images.unsplash.com/photo-1544474673-98485293297a?auto=format&fit=crop&w=1200&q=80'; // Kolmanskop
-  }
-  
-  // Default Scenic Namibia
-  return 'https://images.unsplash.com/photo-1504280390227-361cffbcceed?auto=format&fit=crop&w=1200&q=80';
+  // LoremFlickr is a reliable alternative to the deprecated Unsplash Source
+  // We add namibia to the query to ensure geographic relevance
+  return `https://loremflickr.com/1200/800/namibia,${query}?lock=${index + 10}`;
 };

@@ -483,9 +483,27 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                            className="w-full text-stone-700 text-lg font-medium leading-relaxed bg-stone-50 rounded-2xl p-6 focus:outline-none focus:ring-2 focus:ring-primary custom-scrollbar resize-none border border-stone-200"
                          />
                        ) : (
-                         <p className="text-stone-700 text-lg md:text-xl font-medium leading-relaxed bg-stone-50/50 p-6 rounded-3xl border border-stone-100">
-                           {day.description}
-                         </p>
+                         <div className="space-y-6">
+                           <p className="text-stone-700 text-lg md:text-xl font-medium leading-relaxed bg-stone-50/50 p-6 rounded-3xl border border-stone-100">
+                             {day.description}
+                           </p>
+                           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                             {[0, 1, 2].map(imgIdx => (
+                               <motion.div 
+                                 key={imgIdx}
+                                 whileHover={{ scale: 1.05 }}
+                                 className="h-48 rounded-2xl overflow-hidden shadow-md"
+                                >
+                                 <img 
+                                   src={getTripImage('', day.location + ' ' + (day.activities[imgIdx] || ''), imgIdx + (day.day * 10))} 
+                                   className="w-full h-full object-cover"
+                                   alt={`${day.location} view ${imgIdx + 1}`}
+                                   loading="lazy"
+                                 />
+                               </motion.div>
+                             ))}
+                           </div>
+                         </div>
                        )}
                     </div>
 

@@ -2,6 +2,7 @@ import { OpenRouter } from "@openrouter/sdk";
 import { TripConfig, ItineraryData } from "../types";
 import { ACTIVITIES_DATA } from "../activities-data";
 import { getNearbyOSMPlaces, OSMPlace } from "./osm";
+import { LODGING_DATA, LodgingOption } from "./lodging";
 
 const MAJOR_HUBS = ['Windhoek', 'Swakopmund', 'Walvis Bay', 'Luderitz', 'Rundu', 'Etosha', 'Sesriem'];
 
@@ -53,7 +54,17 @@ const outputSchemaStr = `{
         "name": "string",
         "type": "string",
         "bookingSearchQuery": "string",
-        "features": ["string"]
+        "features": ["string"],
+        "listings": [
+          {
+            "name": "string",
+            "price": "number",
+            "currency": "string",
+            "rating": "number",
+            "recommendationReason": "string"
+          }
+        ],
+        "finalRecommendationReason": "string"
       }
     }
   ]
@@ -96,24 +107,32 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     Below is a list of REAL activities available in the selected regions. You MUST prioritize using these exact activities where they fit the itinerary. DO NOT make up imaginary activities.
     ${ACTIVITIES_DATA.filter(a => config.selectedRegions.includes(a.region)).map(a => `- [${a.region.toUpperCase()}] ${a.label}`).join('\n')}
 
+    REAL LODGING DATABASE:
+    Below are REAL accommodation options for the regions you might visit. For each day, you MUST 'fetch' (select) 2-3 relevant listings from this list, compare them in your mind based on the traveler's budget and preferences, and then provide a 'finalRecommendationReason' for your chosen one.
+    ${LODGING_DATA.filter(l => config.selectedRegions.some(r => l.region.toLowerCase().includes(r.toLowerCase())) || config.logistics.startingLocation?.includes(l.region)).map(l => `- [${l.region}] ${l.name} (${l.type}): ~${l.priceRange.min}-${l.priceRange.max} ${l.currency} - ${l.features.join(', ')}`).join('\n')}
+
     INSTRUCTIONS:
-    1. Base all activities STRICTLY on real-world Namibian landmarks and the 'AUTHENTIC ACTIVITIES REFERENCE' provided above. Provide 2-4 distinct activities per day. DO NOT suggest imaginary or impossible activities (e.g., no 'kayaking in the desert' unless it's a real river, no 'riding rhinos').
-    2. Start the itinerary logically from the starting location or the Custom Pickups specified. Ensure you route through the requested pickups in order if provided.
-    3. Be DETAILED AND IMMERSIVE in the 'overview' and daily 'description'. Provide rich, multi-sentence narratives that paint a vivid picture of the REAL landscape.
-    4. Account for realistic driving times. You MUST format 'driveTimeHours' to include both time and distance, e.g., "3.5 hours (~250km)".
-    5. Provide lodging names that fit the explicitly requested 'Accommodation Scope' and budget priorities. 
-    ${config.logistics.specificAccommodation ? `5b. CRITICAL: The user has requested a specific accommodation: ${config.logistics.specificAccommodation}. You MUST center their entire stay AND coordinates around THIS specific accommodation.` : ''}
-    6. Ensure 'transportBookingQuery' (under logistics) is an accurate search query for finding rental cars for the user's vehicle type.
-    7. ACCURATE COORDINATES: You MUST provide an accurate 'latitude' and 'longitude' mapping to a real place for EVERY SINGLE stop/lodge.
-    8. FUEL CALCULATION: Use the provided fuel consumption rate (${config.vehicle.fuelConsumptionL100km || 12}L/100km) × total distance × number of vehicles (${config.vehicle.numberOfVehicles || 1}) to calculate realistic fuel costs within the budget allocation.
+    1. Base all activities STRICTLY on real-world Namibian landmarks and the 'AUTHENTIC ACTIVITIES REFERENCE' provided above. Provide 2-4 distinct activities per day.
+    2. Start the itinerary logically from the starting location.
+    3. Be DETAILED AND IMMERSIVE in the 'overview' and daily 'description'.
+    4. Account for realistic driving times. Format 'driveTimeHours' as "3.5 hours (~250km)".
+    5. HOUSING & LISTINGS: For EVERY daily stop, you MUST:
+       a. Identify the location.
+       b. Search the 'REAL LODGING DATABASE' above for options in that region.
+       c. Populate the 'accommodation.listings' array with 2-3 accurate options from the database.
+       d. Add accurate prices (use the mid-point of the provided price range).
+       e. In 'finalRecommendationReason', EXPLAIN why you chose the primary 'name' over the other listings (e.g., "Best value for budget", "Unbeatable waterhole views", "Closer to the dunes").
+    6. Ensure 'transportBookingQuery' (under logistics) is an accurate search query.
+    7. ACCURATE COORDINATES: Provide accurate 'latitude' and 'longitude' for EVERY stop/lodge.
+    8. FUEL CALCULATION: Use the provided fuel consumption rate to calculate realistic fuel costs.
     9. STAY STYLE: If 'Basecamp', use the EXACT SAME accommodation for EVERY day.
-    10. ACCURATE PRICING: Under \`logistics.estimatedBudgetTotal\`, give a REALISTIC budget in the user's base currency (${config.baseCurrency || 'USD'}). Do not just echo the user's stated budget.
-    11. MEALS: Provide specific local dish names and restaurant suggestions. DO NOT just say "Breakfast at lodge".
-    12. UNIQUENESS: Each itinerary should feel personal and unique. Suggest at least one surprising or unconventional activity the travelers wouldn't have thought of on their own.
-    13. REAL-WORLD RESEARCH: You are expected to act as if you are searching live databases. Provide REAL pricing, REAL restaurant names, and REAL housing options. If a user names a town, center your research on that town's actual infrastructure.
-    14. ACCURATE GEOLOCATION: Ensure the 'latitude' and 'longitude' for every daily stop are pinpoint accurate. Use the provided GEOGRAPHIC REFERENCE for major hubs.
-    15. DATES & MOOD: Center the itinerary flow around the requested MOOD (${config.logistics.mood || 'Balanced'}). If exact dates are provided, mention them in the daily breakdown headers if appropriate.
-    16. STARTING POINT: You MUST provide coordinates for the starting location: ${config.logistics.startingLocation || 'Windhoek'}. Fill 'tripSummary.startingPoint' with its name, latitude, and longitude.
+    10. ACCURATE PRICING: Under \`logistics.estimatedBudgetTotal\`, give a REALISTIC budget in ${config.baseCurrency || 'USD'}.
+    11. MEALS: Provide specific local dish names and restaurant suggestions.
+    12. UNIQUENESS: Suggest at least one surprising or unconventional activity.
+    13. REAL-WORLD RESEARCH: Act as if you are searching live databases. Provide REAL pricing and REAL housing options.
+    14. ACCURATE GEOLOCATION: Ensure the 'latitude' and 'longitude' are pinpoint accurate.
+    15. DATES & MOOD: Center the itinerary flow around the requested MOOD.
+    16. STARTING POINT: Provide coordinates for the starting location: ${config.logistics.startingLocation || 'Windhoek'}.
   `;
 
   const systemInstruction = `You are an elite Namibian travel architect. Output STRICTLY VALID JSON. DO NOT TRUNCATE YOUR RESPONSE.
@@ -310,8 +329,11 @@ export const generateFromDescription = async (
     - Cape Cross: -21.7708, 13.9872
 
     ACCOMMODATION & RESEARCH INSTRUCTIONS:
-    - You MUST suggest REAL, highly-rated accommodations for every town mentioned.
-    - Activities MUST match the specific location realistically.
+    - You MUST fetch real listings for every stop from the database provided below.
+    - Compare 2-3 options and explain your choice in 'finalRecommendationReason'.
+
+    REAL LODGING DATABASE:
+    ${LODGING_DATA.map(l => `- [${l.region}] ${l.name} (${l.type}): ~${l.priceRange.min}-${l.priceRange.max} ${l.currency} - ${l.features.join(', ')}`).join('\n')}
 
     ALL monetary values MUST be returned in ${baseCurrency}.
 
@@ -403,7 +425,17 @@ export const modifyItinerary = async (
           "name": "string",
           "type": "string",
           "bookingSearchQuery": "string",
-          "features": ["string"]
+          "features": ["string"],
+          "listings": [
+            {
+              "name": "string",
+              "price": "number",
+              "currency": "string",
+              "rating": "number",
+              "recommendationReason": "string"
+            }
+          ],
+          "finalRecommendationReason": "string"
         }
       }
     ]
@@ -433,7 +465,11 @@ export const modifyItinerary = async (
     - Mood: ${config?.logistics?.mood || 'Balanced'}
     - Dates: ${config?.logistics?.startDate || 'Not set'} to ${config?.logistics?.endDate || 'Not set'}
 
+    REAL LODGING DATABASE (for any new stops):
+    ${LODGING_DATA.map(l => `- [${l.region}] ${l.name} (${l.type}): ~${l.priceRange.min}-${l.priceRange.max} ${l.currency} - ${l.features.join(', ')}`).join('\n')}
+
     Apply the changes requested and return the full updated JSON.
+    For any new days or changed locations, perform the 'AI Market Analysis' on lodging by selecting 2-3 listings and explaining your recommendation.
   `;
 
   const response = await openrouter.chat.send({

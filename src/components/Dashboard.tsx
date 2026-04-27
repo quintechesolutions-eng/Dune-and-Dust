@@ -6,7 +6,7 @@ import { SavedItinerary } from '../types';
 import { Calendar, Trash2, Share2, Eye, EyeOff, Compass, Heart, Download, Car, Navigation as NavIcon, Clock, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { exportToPDF } from '../services/pdfExport';
-import { getTripImage } from '../constants';
+import { getTripImage, LANDSCAPE_IMAGES } from '../constants';
 
 interface DashboardProps {
   onViewTrip: (trip: SavedItinerary) => void;
@@ -77,9 +77,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ onViewTrip }) => {
   );
 
   return (
-    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
-        <div>
+    <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 relative">
+      {/* Background Landscape Scroll */}
+      <div className="absolute top-0 left-0 right-0 h-[400px] -z-10 overflow-hidden rounded-[4rem] opacity-30 mask-gradient-b">
+        <motion.div 
+          animate={{ x: [0, -1200 * (LANDSCAPE_IMAGES.length - 1)] }}
+          transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
+          className="flex whitespace-nowrap"
+        >
+          {[...LANDSCAPE_IMAGES, ...LANDSCAPE_IMAGES].map((img, i) => (
+            <img key={i} src={img} className="w-[1200px] h-[400px] object-cover shrink-0" alt="Landscape" />
+          ))}
+        </motion.div>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#f8fafc]/0 via-[#f8fafc]/50 to-[#f8fafc]" />
+      </div>
+
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6 pt-20">
+        <div className="relative z-10">
           <h1 className="text-5xl font-black text-stone-900 tracking-tight mb-2">Mission Control</h1>
           <p className="text-stone-500 font-medium text-lg">Your archived expeditions and safari architectures</p>
         </div>
