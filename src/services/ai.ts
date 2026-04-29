@@ -3,6 +3,7 @@ import { TripConfig, ItineraryData } from "../types";
 import { ACTIVITIES_DATA } from "../activities-data";
 import { getNearbyOSMPlaces, OSMPlace } from "./osm";
 import { LODGING_DATA, LodgingOption } from "./lodging";
+import { searchLocations } from "./locationIQ";
 
 const MAJOR_HUBS = ['Windhoek', 'Swakopmund', 'Walvis Bay', 'Luderitz', 'Rundu', 'Etosha', 'Sesriem'];
 
@@ -225,10 +226,29 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
  * This ensures even remote areas have some real landmarks and fuel stops.
  */
 async function enrichItineraryWithRealWorldData(data: ItineraryData): Promise<ItineraryData> {
+  // 1. Resolve starting point coordinates if missing
+  if (data.tripSummary.startingPoint && (!data.tripSummary.startingPoint.latitude || !data.tripSummary.startingPoint.longitude)) {
+    const results = await searchLocations(data.tripSummary.startingPoint.location);
+    if (results.length > 0) {
+      data.tripSummary.startingPoint.latitude = parseFloat(results[0].lat);
+      data.tripSummary.startingPoint.longitude = parseFloat(results[0].lon);
+    }
+  }
+
+  // 2. Resolve each day's location coordinates and enrich with landmarks
   const enrichedPlan = await Promise.all(data.dailyPlan.map(async (day) => {
+    // If coordinates are missing or zero, try to resolve using LocationIQ
+    if (!day.latitude || !day.longitude || (day.latitude === 0 && day.longitude === 0)) {
+      const results = await searchLocations(`${day.location}, Namibia`);
+      if (results.length > 0) {
+        day.latitude = parseFloat(results[0].lat);
+        day.longitude = parseFloat(results[0].lon);
+      }
+    }
+
     if (!day.latitude || !day.longitude) return day;
 
-    // Fetch from OSM
+    // Fetch from OSM for micro-landmarks
     const osmPlaces = await getNearbyOSMPlaces(day.latitude, day.longitude, 10000); // 10km radius
     
     if (!day.waypoints) day.waypoints = [];

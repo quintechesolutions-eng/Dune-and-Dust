@@ -193,8 +193,8 @@ export const ExpeditionMap: React.FC<ExpeditionMapProps> = ({ data, activeDay })
         <MapController data={data} activeDay={activeDay} />
         <ZoomToFit points={allPoints.map(p => [p.latitude!, p.longitude!] as [number, number])} trigger={zoomTrigger} />
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://locationiq.com">LocationIQ</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url={`https://{s}-tiles.locationiq.com/v3/streets/r/{z}/{x}/{y}.png?key=pk.3fd0a0ae7669c99a748712da6ebf7c4e`}
         />
 
         {data.tripSummary.startingPoint && (

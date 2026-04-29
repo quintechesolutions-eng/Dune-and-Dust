@@ -15,7 +15,7 @@ export const exportToPDF = (trip: SavedItinerary) => {
   const symbol = currencySymbols[baseCurrency] || `${baseCurrency} `;
 
   // Premium Color Palette (Namibian Desert Inspired)
-  const colors = {
+  const colors: Record<string, [number, number, number]> = {
     primary: [180, 83, 9],    // Deep Ochre / Burnt Orange
     secondary: [28, 25, 23],  // Stone 900 / Charcoal
     accent: [217, 119, 6],    // Amber 600 / Sunset Gold
@@ -314,13 +314,15 @@ export const exportToPDF = (trip: SavedItinerary) => {
   if (trip.data.logistics.budgetAllocation) {
     yPos = addSectionHeader('Financial Estimates', yPos);
 
-    const budgetData = [
+    const budgetData: any[][] = [
       ['Accommodation', `${symbol}${trip.data.logistics.budgetAllocation.accommodation.toLocaleString()}`],
       ['Transportation & Fuel', `${symbol}${trip.data.logistics.budgetAllocation.transportation.toLocaleString()}`],
       ['Food & Dining', `${symbol}${trip.data.logistics.budgetAllocation.food.toLocaleString()}`],
       ['Activities & Fees', `${symbol}${trip.data.logistics.budgetAllocation.activities.toLocaleString()}`],
-      [{ content: 'TOTAL ESTIMATED', styles: { fontStyle: 'bold', fillColor: colors.secondary, textColor: colors.white } },
-      { content: `${symbol}${totalBudget.toLocaleString()}`, styles: { fontStyle: 'bold', fillColor: colors.secondary, textColor: colors.white, halign: 'right' } }]
+      [
+        { content: 'TOTAL ESTIMATED', styles: { fontStyle: 'bold', fillColor: colors.secondary, textColor: colors.white } },
+        { content: `${symbol}${totalBudget.toLocaleString()}`, styles: { fontStyle: 'bold', fillColor: colors.secondary, textColor: colors.white, halign: 'right' } }
+      ]
     ];
 
     autoTable(doc, {

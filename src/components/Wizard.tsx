@@ -13,6 +13,8 @@ import { TripConfig, Traveler, PickupPoint } from '../types';
 import { auth, db } from '../lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { doc, getDoc } from 'firebase/firestore';
+import { LocationInput } from './LocationInput';
+import { LocationSuggestion } from '../services/locationIQ';
 
 interface WizardProps {
   onGenerate: (config: TripConfig) => void;
@@ -290,7 +292,10 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                         style={{ height: '100%', width: '100%' }}
                         attributionControl={false}
                       >
-                         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                         <TileLayer 
+                            attribution='&copy; <a href="https://locationiq.com">LocationIQ</a>'
+                            url={`https://{s}-tiles.locationiq.com/v3/streets/r/{z}/{x}/{y}.png?key=pk.3fd0a0ae7669c99a748712da6ebf7c4e`} 
+                         />
                          
                          <MapEventsHandler onRightClick={(e: any) => {
                             const { lat, lng } = e.latlng;
@@ -373,15 +378,21 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                                    <option value="start">Start Location</option>
                                    <option value="pickup">Mid-Trip Pick-up/Stop</option>
                                  </select>
-                                 <input 
-                                   type="text" 
-                                   placeholder="Reason (e.g. Pick up friends, home)" 
-                                   className="flex-1 bg-transparent outline-none font-medium text-stone-600"
+                                 <LocationInput
                                    value={p.reason}
-                                   onChange={e => updatePickup(p.id, { reason: e.target.value })}
+                                   onChange={val => updatePickup(p.id, { reason: val })}
+                                   onSelect={(s: LocationSuggestion) => {
+                                     updatePickup(p.id, { 
+                                       reason: s.address.name || s.display_name.split(',')[0],
+                                       lat: parseFloat(s.lat),
+                                       lng: parseFloat(s.lon)
+                                     });
+                                   }}
+                                   placeholder="e.g. Home, Airport, Hotel..."
+                                   className="flex-1"
                                  />
                                </div>
-                               <button onClick={() => removePickup(p.id)} className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-600"><Trash2 className="w-4 h-4"/></button>
+                               <button onClick={() => removePickup(p.id)} className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-600 z-10"><Trash2 className="w-4 h-4"/></button>
                              </div>
                            ))}
                          </div>
@@ -725,16 +736,17 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     </div>
                     <div className="space-y-3 md:col-span-2">
                       <label className="text-xs font-black uppercase text-stone-400">Expedition Starting Point</label>
-                      <div className="relative">
-                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
-                        <input 
-                          type="text" 
-                          placeholder="e.g. Windhoek Airport, your hotel name, or city"
-                          className="w-full p-4 pl-12 border border-stone-200 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition rounded-xl font-bold"
-                          value={config.logistics.startingLocation || ''}
-                          onChange={e => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, startingLocation: e.target.value } }))}
-                        />
-                      </div>
+                      <LocationInput
+                        value={config.logistics.startingLocation || ''}
+                        onChange={val => setConfig(prev => ({ ...prev, logistics: { ...prev.logistics, startingLocation: val } }))}
+                        onSelect={(s: LocationSuggestion) => {
+                          setConfig(prev => ({ 
+                            ...prev, 
+                            logistics: { ...prev.logistics, startingLocation: s.display_name } 
+                          }));
+                        }}
+                        placeholder="e.g. Windhoek Airport, your hotel name, or city"
+                      />
                     </div>
                     <div className="space-y-3 md:col-span-2">
                       <label className="text-xs font-black uppercase text-stone-400">Total Group Budget (Calculated)</label>
