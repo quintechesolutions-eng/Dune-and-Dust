@@ -171,7 +171,7 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
 
   const response = await openrouter.chat.send({
     chatRequest: {
-      model: "inclusionai/ling-2.6-flash:free",
+      model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
       messages: [
         { role: "system", content: systemInstruction },
         { role: "user", content: prompt }
@@ -356,7 +356,7 @@ export const generateFromDescription = async (
 
   const response = await openrouter.chat.send({
     chatRequest: {
-      model: "inclusionai/ling-2.6-flash:free",
+      model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
       messages: [
         { role: "system", content: systemInstruction },
         { role: "user", content: prompt }
@@ -474,7 +474,7 @@ export const modifyItinerary = async (
 
   const response = await openrouter.chat.send({
     chatRequest: {
-      model: "inclusionai/ling-2.6-flash:free",
+      model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
       messages: [
         { role: "system", content: systemInstruction },
         { role: "user", content: prompt }
