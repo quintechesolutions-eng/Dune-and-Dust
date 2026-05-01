@@ -28,11 +28,11 @@ export const DETAIL_LEVELS = [
 ];
 
 export const ACCOMMODATION_STYLES = [
-  { id: 'luxury_lodge', name: 'Luxury Safari Lodges', image: 'https://images.unsplash.com/photo-1518544801976-3e159e50e5bb?auto=format&fit=crop&w=800&q=80', desc: 'Premium services, fine dining, and guided drives.' },
-  { id: 'guest_farm', name: 'Private Guest Farms', image: 'https://images.unsplash.com/photo-1534430480872-3498386e7856?auto=format&fit=crop&w=800&q=80', desc: 'Authentic Namibian farm stays with home-cooked meals.' },
-  { id: 'airbnb_self_catering', name: 'Airbnb & Self-Catering', image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80', desc: 'Independent villas, townhouses, or remote cabins.' },
-  { id: 'glamping', name: 'Boutique Glamping', image: 'https://images.unsplash.com/photo-1504280390227-361cffbcceed?auto=format&fit=crop&w=800&q=80', desc: 'Canvas tents with en-suite bathrooms and real beds.' },
-  { id: 'rooftop_camping', name: 'Rooftop Tents / Camping', image: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=800&q=80', desc: 'Rugged freedom under the stars with your 4x4.' }
+  { id: 'luxury_lodge', name: 'Luxury Safari Lodges', image: 'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?auto=format&fit=crop&w=800&q=80', desc: 'Premium services, fine dining, and guided drives.' },
+  { id: 'guest_farm', name: 'Private Guest Farms', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80', desc: 'Authentic Namibian farm stays with home-cooked meals.' },
+  { id: 'airbnb_self_catering', name: 'Airbnb & Self-Catering', image: 'https://images.unsplash.com/photo-1464146072230-91cabc968266?auto=format&fit=crop&w=800&q=80', desc: 'Independent villas, townhouses, or remote cabins.' },
+  { id: 'glamping', name: 'Boutique Glamping', image: 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=800&q=80', desc: 'Canvas tents with en-suite bathrooms and real beds.' },
+  { id: 'rooftop_camping', name: 'Rooftop Tents / Camping', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80', desc: 'Rugged freedom under the stars with your 4x4.' }
 ];
 
 export const BUDGET_OPTIONS = [
@@ -76,18 +76,24 @@ export const LOADING_FACTS = [
 ];
 
 export const VEHICLE_OPTIONS = [
-  { id: 'heavy_4x4', name: 'Heavy-Duty Expedition 4x4 (e.g. Land Cruiser 79)', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 14, desc: 'The gold standard for African expeditions. Invincible on any terrain.', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
-  { id: 'standard_4x4', name: 'Standard 4x4 SUV (e.g. Toyota Fortuner)', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 10, desc: 'Reliable, comfortable, handles all Namibian gravel roads.', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80' },
-  { id: 'compact_4x4', name: 'Compact 4x4 (e.g. Suzuki Jimny)', drivetain: '4x4', fuel: 'Petrol', fuelL100km: 8, desc: 'Small but mighty, great fuel economy on lighter trails.', image: 'https://images.unsplash.com/photo-1559404287-dc1945f85022?auto=format&fit=crop&w=800&q=80' },
-  { id: 'luxury_suv', name: 'Luxury 4x4 SUV (e.g. Range Rover Sport)', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 12, desc: 'Premium comfort meets serious off-road capability.', image: 'https://images.unsplash.com/photo-1606611013014-0b949a64e2f6?auto=format&fit=crop&w=800&q=80' },
-  { id: 'hilux_double', name: 'Double Cab Bakkie (e.g. Toyota Hilux)', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 11, desc: 'Load bed for gear, rooftop tent ready, Namibia\'s workhorse.', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&w=800&q=80' },
-  { id: 'campervan', name: '4x4 Camper Motorhome', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 18, desc: 'Fully integrated living space for maximum self-sufficiency.', image: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=800&q=80' },
-  { id: 'rooftop_4x4', name: '4x4 with Rooftop Tent (e.g. Hilux + RTT)', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 12, desc: 'The classic overlander setup. Sleep anywhere, explore everything.', image: 'https://images.unsplash.com/photo-1504280390227-361cffbcceed?auto=format&fit=crop&w=800&q=80' },
-  { id: 'rugged_awd', name: 'AWD Crossover (e.g. Subaru Outback)', drivetain: 'AWD', fuel: 'Petrol', fuelL100km: 8, desc: 'Great on graded gravel, excellent fuel economy.', image: 'https://images.unsplash.com/photo-1593941707882-a5bba14938c7?auto=format&fit=crop&w=800&q=80' },
-  { id: 'minivan', name: 'Minivan / People Carrier (e.g. VW Caravelle)', drivetain: '2WD', fuel: 'Diesel', fuelL100km: 9, desc: 'Space for 6-8 passengers. Tarred roads and light gravel only.', image: 'https://images.unsplash.com/photo-1570733577524-3a047079e80d?auto=format&fit=crop&w=800&q=80' },
-  { id: 'small_hatchback', name: 'Small Hatchback/Sedan (e.g. VW Polo)', drivetain: '2WD', fuel: 'Petrol', fuelL100km: 6, desc: 'Budget-friendly. Strictly limited to tarred major roads.', image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80' },
-  { id: 'motorcycle', name: 'Adventure Motorcycle (e.g. BMW GS 1250)', drivetain: '2WD', fuel: 'Petrol', fuelL100km: 5, desc: 'For solo riders. Extreme freedom but requires experience.', image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80' },
-  { id: 'ev_suv', name: 'Electric SUV (e.g. Tesla Model Y)', drivetain: 'AWD', fuel: 'Electric', fuelL100km: 0, desc: 'Limited to major corridors with charging. Not recommended for remote routes.', image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=800&q=80' },
+  // Adventure
+  { id: 'heavy_4x4', category: 'adventure', name: 'Heavy-Duty Expedition 4x4', model: 'Land Cruiser 79', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 14, luggage: 6, desc: 'The gold standard for African expeditions. Invincible on any terrain.', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
+  { id: 'standard_4x4', category: 'adventure', name: 'Standard 4x4 SUV', model: 'Toyota Fortuner', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 10, luggage: 5, desc: 'Reliable, comfortable, handles all Namibian gravel roads.', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80' },
+  { id: 'hilux_double', category: 'adventure', name: 'Double Cab Bakkie', model: 'Toyota Hilux', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 11, luggage: 8, desc: 'Load bed for gear, rooftop tent ready, Namibia\'s workhorse.', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&w=800&q=80' },
+  { id: 'campervan', category: 'adventure', name: '4x4 Camper Motorhome', model: 'Iveco Daily 4x4', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 18, luggage: 10, desc: 'Fully integrated living space for maximum self-sufficiency.', image: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=800&q=80' },
+  
+  // Standard
+  { id: 'sedan', category: 'standard', name: 'Standard Sedan', model: 'Toyota Corolla', drivetain: '2WD', fuel: 'Petrol', fuelL100km: 6, luggage: 3, desc: 'Fuel efficient and comfortable for tarred road journeys.', image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80' },
+  { id: 'hatchback', category: 'standard', name: 'Compact Hatchback', model: 'VW Polo', drivetain: '2WD', fuel: 'Petrol', fuelL100km: 5.5, luggage: 2, desc: 'Perfect for solo travelers or couples on a budget.', image: 'https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=800&q=80' },
+  { id: 'station_wagon', category: 'standard', name: 'Station Wagon', model: 'VW Golf Variant', drivetain: '2WD', fuel: 'Diesel', fuelL100km: 6.5, luggage: 5, desc: 'Extra luggage space for families sticking to major routes.', image: 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=800&q=80' },
+
+  // Two-Wheels
+  { id: 'adv_motorcycle', category: 'two-wheels', name: 'Adventure Motorcycle', model: 'BMW R1250GS', drivetain: '2WD', fuel: 'Petrol', fuelL100km: 5, luggage: 1, desc: 'For solo riders seeking extreme freedom on gravel paths.', image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80' },
+  { id: 'bicycle', category: 'two-wheels', name: 'Touring Bicycle', model: 'Surly Ogre', drivetain: 'Manual', fuel: 'None', fuelL100km: 0, luggage: 1, desc: 'The ultimate slow-travel challenge. Requires peak fitness.', image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=800&q=80' },
+
+  // Public Transport
+  { id: 'taxi', category: 'public', name: 'Inter-city Shared Taxi', model: 'Quantum Minibus', drivetain: '2WD', fuel: 'Petrol', luggage: 1, desc: 'The most common way locals travel between towns.', ticketCost: 15, frequency: 'Daily (Morning)', image: 'https://images.unsplash.com/photo-1554672408-730436b60dde?auto=format&fit=crop&w=800&q=80' },
+  { id: 'bus', category: 'public', name: 'Luxury Inter-city Bus', model: 'Intercape', drivetain: '2WD', fuel: 'Diesel', luggage: 2, desc: 'Comfortable, scheduled coaches connecting major hubs.', ticketCost: 40, frequency: 'Twice Daily', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80' },
 ];
 export const LANDSCAPE_IMAGES = [
   'https://images.unsplash.com/photo-1520113412646-04fc68c0bc21?auto=format&fit=crop&w=1200&q=80', // Sossusvlei
@@ -101,9 +107,21 @@ export const LANDSCAPE_IMAGES = [
 ];
 
 export const getTripImage = (title: string = '', location: string = '', index: number = 0) => {
-  const query = (location || title || 'Namibia Landscape').toLowerCase().replace(/\s+/g, ',');
+  const normalizedLoc = (location || title || '').toLowerCase();
   
-  // LoremFlickr is a reliable alternative to the deprecated Unsplash Source
-  // We add namibia to the query to ensure geographic relevance
-  return `https://loremflickr.com/1200/800/namibia,${query}?lock=${index + 10}`;
+  // High-fidelity keyword mapping for Namibia
+  let searchTerms = 'namibia,landscape';
+  if (normalizedLoc.includes('etosha')) searchTerms = 'namibia,wildlife,safari,lion,elephant';
+  else if (normalizedLoc.includes('sossusvlei') || normalizedLoc.includes('deadvlei') || normalizedLoc.includes('sesriem')) searchTerms = 'namibia,dunes,sossusvlei,red,sand';
+  else if (normalizedLoc.includes('swakopmund') || normalizedLoc.includes('walvis')) searchTerms = 'namibia,coast,ocean,flamingos';
+  else if (normalizedLoc.includes('skeleton')) searchTerms = 'namibia,skeleton,coast,shipwreck';
+  else if (normalizedLoc.includes('damaraland') || normalizedLoc.includes('twyfelfontein')) searchTerms = 'namibia,rocks,mountains,elephant';
+  else if (normalizedLoc.includes('fish river')) searchTerms = 'namibia,canyon,river';
+  else if (normalizedLoc.includes('caprivi') || normalizedLoc.includes('zambezi')) searchTerms = 'namibia,wetlands,river,hippo';
+  else if (normalizedLoc.includes('luderitz') || normalizedLoc.includes('kolmanskop')) searchTerms = 'namibia,ghost,town,sand,luderitz';
+  else if (normalizedLoc.includes('windhoek')) searchTerms = 'namibia,city,windhoek,architecture';
+  else if (normalizedLoc.includes('kalahari')) searchTerms = 'namibia,kalahari,red,sand';
+
+  // LoremFlickr with the improved search terms
+  return `https://loremflickr.com/1200/800/${searchTerms}/all?lock=${index + 100}`;
 };

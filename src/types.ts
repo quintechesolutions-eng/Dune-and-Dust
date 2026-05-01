@@ -7,13 +7,19 @@ export interface Traveler {
 }
 
 export interface Vehicle {
-  rentalMode: 'own' | 'rental';
+  id: string;
+  type: 'private' | 'public' | 'guided';
+  category: 'adventure' | 'standard' | 'two-wheels' | 'public';
+  rentalMode?: 'own' | 'rental';
   make: string;
   model: string;
-  drivetrain: string;
-  fuelType: string;
-  numberOfVehicles: number;
+  drivetrain?: string;
+  fuelType?: string;
   fuelConsumptionL100km?: number;
+  luggageCapacity: number; // Number of large bags
+  ticketCost?: number;
+  frequency?: string;
+  driverId?: number; // Linked to Traveler.id
 }
 
 export interface Logistics {
@@ -44,7 +50,7 @@ export interface PickupPoint {
 export interface TripConfig {
   selectedRegions: string[];
   travelers: Traveler[];
-  vehicle: Vehicle;
+  vehicles: Vehicle[];
   selectedInterests: string[];
   logistics: Logistics;
   baseCurrency?: string;

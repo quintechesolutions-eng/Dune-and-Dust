@@ -72,9 +72,12 @@ const outputSchemaStr = `{
 }`;
 
 export const generateItinerary = async (config: TripConfig): Promise<ItineraryData> => {
-  const fuelInfo = config.vehicle.fuelConsumptionL100km 
-    ? `Fuel Consumption: ~${config.vehicle.fuelConsumptionL100km}L/100km. Use this to calculate realistic fuel costs (Namibian diesel ~N$22/L, petrol ~N$24/L).`
-    : '';
+  const vehiclesInfo = config.vehicles.map(v => {
+    const fuelDetail = v.fuelConsumptionL100km 
+      ? `(~${v.fuelConsumptionL100km}L/100km ${v.fuelType})`
+      : v.type === 'public' ? `(Public Transport - Ticket: ${v.ticketCost} ${config.baseCurrency})` : '';
+    return `- ${v.make} ${v.model} [${v.type.toUpperCase()}] ${fuelDetail}`;
+  }).join('\n');
 
   const prompt = `
     Create a custom Namibian travel itinerary.
@@ -83,10 +86,9 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
     ${config.travelers.map(t => `- ${t.name} (Age: ${t.age}, Driver License: ${t.hasLicense ? 'Yes' : 'No'}, Budget: ${t.budget || 0} ${config.baseCurrency || 'USD'})`).join('\n')}
     Total Group Budget: ${config.travelers.reduce((acc, t) => acc + (t.budget || 0), 0)} ${config.baseCurrency || 'USD'}
     
-    Vehicle Details: ${config.vehicle.make} (${config.vehicle.rentalMode === 'rental' ? 'Renting' : 'Own Vehicle'}, ${config.vehicle.drivetrain}), Fuel: ${config.vehicle.fuelType}.
-    Number of Vehicles: ${config.vehicle.numberOfVehicles || 1}${config.vehicle.numberOfVehicles > 1 ? ' (convoy — multiply fuel costs accordingly!)' : ''}.
-    ${fuelInfo}
-    *CRITICAL: Provide specific fuel stop advice based on the vehicle type and consumption rate.*
+    Transport Logistics:
+    ${vehiclesInfo}
+    *CRITICAL: Provide specific fuel stop advice for private vehicles and schedule/terminal advice for public transport.*
 
     Trip Logistics:
     - Travel Style: ${config.logistics.stayStyle === 'basecamp' ? 'Basecamp (Stay at ONE single accommodation for the entire trip and take day trips)' : 'Nomadic (Move between different accommodations along the route)'}
@@ -172,7 +174,7 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
 
   const response = await openrouter.chat.send({
     chatRequest: {
-      model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      model: "google/gemini-2.0-flash-lite-preview-02-05:free",
       messages: [
         { role: "system", content: systemInstruction },
         { role: "user", content: prompt }
@@ -226,68 +228,94 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
  * This ensures even remote areas have some real landmarks and fuel stops.
  */
 async function enrichItineraryWithRealWorldData(data: ItineraryData): Promise<ItineraryData> {
-  // 1. Resolve starting point coordinates if missing
+  // 1. Resolve starting point and all daily coordinates in parallel (LocationIQ is fast)
+  const geocodePromises = [];
+
   if (data.tripSummary.startingPoint && (!data.tripSummary.startingPoint.latitude || !data.tripSummary.startingPoint.longitude)) {
-    const results = await searchLocations(data.tripSummary.startingPoint.location);
-    if (results.length > 0) {
-      data.tripSummary.startingPoint.latitude = parseFloat(results[0].lat);
-      data.tripSummary.startingPoint.longitude = parseFloat(results[0].lon);
-    }
+    geocodePromises.push((async () => {
+      const results = await searchLocations(data.tripSummary.startingPoint.location);
+      if (results.length > 0 && data.tripSummary.startingPoint) {
+        data.tripSummary.startingPoint.latitude = parseFloat(results[0].lat);
+        data.tripSummary.startingPoint.longitude = parseFloat(results[0].lon);
+      }
+    })());
   }
 
-  // 2. Resolve each day's location coordinates and enrich with landmarks
-  const enrichedPlan = await Promise.all(data.dailyPlan.map(async (day) => {
-    // If coordinates are missing or zero, try to resolve using LocationIQ
+  data.dailyPlan.forEach((day) => {
     if (!day.latitude || !day.longitude || (day.latitude === 0 && day.longitude === 0)) {
-      const results = await searchLocations(`${day.location}, Namibia`);
-      if (results.length > 0) {
-        day.latitude = parseFloat(results[0].lat);
-        day.longitude = parseFloat(results[0].lon);
-      }
-    }
-
-    if (!day.latitude || !day.longitude) return day;
-
-    // Fetch from OSM for micro-landmarks
-    const osmPlaces = await getNearbyOSMPlaces(day.latitude, day.longitude, 10000); // 10km radius
-    
-    if (!day.waypoints) day.waypoints = [];
-
-    // Process OSM results
-    if (osmPlaces.length > 0) {
-      // Find a viewpoint or campsite if the AI was vague
-      const viewpoint = osmPlaces.find(p => p.tags.tourism === 'viewpoint');
-      if (viewpoint && viewpoint.tags.name && !day.activities.some(a => a.includes(viewpoint.tags.name!))) {
-        day.activities.push(`Panoramic views from ${viewpoint.tags.name} (Local Landmark)`);
-        day.waypoints.push({ type: 'activity', name: viewpoint.tags.name, latitude: viewpoint.lat, longitude: viewpoint.lon });
-      }
-
-      // Add fuel stops - CRITICAL
-      const fuel = osmPlaces.find(p => p.tags.amenity === 'fuel');
-      if (fuel && fuel.tags.name) {
-        day.fuelStopRecommendations = `Refuel at ${fuel.tags.name} (${day.location}).`;
-        day.waypoints.push({ type: 'fuel', name: fuel.tags.name, latitude: fuel.lat, longitude: fuel.lon });
-      }
-
-      // Find local restaurants or pubs
-      if (day.meals.dinner.includes('AI Suggested') || day.meals.dinner.length < 15) {
-        const osmResto = osmPlaces.find(p => p.tags.amenity === 'restaurant' || p.tags.amenity === 'pub' || p.tags.amenity === 'cafe');
-        if (osmResto && osmResto.tags.name) {
-          day.meals.dinner = `Dine at ${osmResto.tags.name} (Local Discovery).`;
-          day.waypoints.push({ type: 'meal', name: osmResto.tags.name, latitude: osmResto.lat, longitude: osmResto.lon });
+      geocodePromises.push((async () => {
+        const results = await searchLocations(`${day.location}, Namibia`);
+        if (results.length > 0) {
+          day.latitude = parseFloat(results[0].lat);
+          day.longitude = parseFloat(results[0].lon);
         }
-      }
+      })());
+    }
+  });
+
+  await Promise.all(geocodePromises);
+
+  // 2. Enrich with landmarks - Use caching and skip redundant calls for same locations
+  const osmCache: Record<string, OSMPlace[]> = {};
+  const enrichedPlan = [];
+
+  for (const day of data.dailyPlan) {
+    if (day.latitude && day.longitude) {
+      const cacheKey = `${day.latitude.toFixed(3)},${day.longitude.toFixed(3)}`;
       
-      // If we found a cafe but no dinner resto, use it for lunch
-      const osmCafe = osmPlaces.find(p => p.tags.amenity === 'cafe');
-      if (osmCafe && osmCafe.tags.name && (day.meals.lunch.includes('AI Suggested') || day.meals.lunch.length < 15)) {
-        day.meals.lunch = `Quick bite at ${osmCafe.tags.name}.`;
-        day.waypoints.push({ type: 'meal', name: osmCafe.tags.name, latitude: osmCafe.lat, longitude: osmCafe.lon });
+      try {
+        let osmPlaces = osmCache[cacheKey];
+        
+        if (!osmPlaces) {
+          // Fetch from OSM for micro-landmarks
+          osmPlaces = await getNearbyOSMPlaces(day.latitude, day.longitude, 10000); // 10km radius
+          osmCache[cacheKey] = osmPlaces;
+          // Small delay only when we actually hit the API
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        if (!day.waypoints) day.waypoints = [];
+
+        // Process OSM results
+        if (osmPlaces.length > 0) {
+          const addedWaypointNames = new Set(day.waypoints.map(w => w.name));
+
+          const viewpoint = osmPlaces.find(p => p.tags.tourism === 'viewpoint');
+          if (viewpoint && viewpoint.tags.name && !addedWaypointNames.has(viewpoint.tags.name) && !day.activities.some(a => a.includes(viewpoint.tags.name!))) {
+            day.activities.push(`Panoramic views from ${viewpoint.tags.name} (Local Landmark)`);
+            day.waypoints.push({ type: 'activity', name: viewpoint.tags.name, latitude: viewpoint.lat, longitude: viewpoint.lon });
+            addedWaypointNames.add(viewpoint.tags.name);
+          }
+
+          const fuel = osmPlaces.find(p => p.tags.amenity === 'fuel');
+          if (fuel && fuel.tags.name && !addedWaypointNames.has(fuel.tags.name)) {
+            day.fuelStopRecommendations = `Refuel at ${fuel.tags.name} (${day.location}).`;
+            day.waypoints.push({ type: 'fuel', name: fuel.tags.name, latitude: fuel.lat, longitude: fuel.lon });
+            addedWaypointNames.add(fuel.tags.name);
+          }
+
+          if (day.meals.dinner.includes('AI Suggested') || day.meals.dinner.length < 15) {
+            const osmResto = osmPlaces.find(p => p.tags.amenity === 'restaurant' || p.tags.amenity === 'pub' || p.tags.amenity === 'cafe');
+            if (osmResto && osmResto.tags.name && !addedWaypointNames.has(osmResto.tags.name)) {
+              day.meals.dinner = `Dine at ${osmResto.tags.name} (Local Discovery).`;
+              day.waypoints.push({ type: 'meal', name: osmResto.tags.name, latitude: osmResto.lat, longitude: osmResto.lon });
+              addedWaypointNames.add(osmResto.tags.name);
+            }
+          }
+          
+          const osmCafe = osmPlaces.find(p => p.tags.amenity === 'cafe');
+          if (osmCafe && osmCafe.tags.name && !addedWaypointNames.has(osmCafe.tags.name) && (day.meals.lunch.includes('AI Suggested') || day.meals.lunch.length < 15)) {
+            day.meals.lunch = `Quick bite at ${osmCafe.tags.name}.`;
+            day.waypoints.push({ type: 'meal', name: osmCafe.tags.name, latitude: osmCafe.lat, longitude: osmCafe.lon });
+            addedWaypointNames.add(osmCafe.tags.name);
+          }
+        }
+      } catch (err) {
+        console.warn(`OSM Enrichment failed for Day ${day.day}:`, err);
       }
     }
-
-    return day;
-  }));
+    enrichedPlan.push(day);
+  }
 
   data.dailyPlan = enrichedPlan;
   return data;
@@ -481,7 +509,7 @@ export const modifyItinerary = async (
 
     TRIP CONTEXT:
     - Travelers: ${config?.travelers?.length || 1}
-    - Vehicle: ${config?.vehicle?.make || 'Standard 4x4'}
+    - Vehicles: ${config?.vehicles?.map(v => v.make).join(', ') || 'Standard 4x4'}
     - Mood: ${config?.logistics?.mood || 'Balanced'}
     - Dates: ${config?.logistics?.startDate || 'Not set'} to ${config?.logistics?.endDate || 'Not set'}
 

@@ -212,11 +212,12 @@ export const ExpeditionMap: React.FC<ExpeditionMapProps> = ({ data, activeDay })
         )}
 
         <MarkerClusterGroup chunkedLoading>
-          {data.dailyPlan.map((day) => (
-            <React.Fragment key={`day-${day.day}`}>
+          {data.dailyPlan.map((day, dIdx) => (
+            <React.Fragment key={`day-group-${day.day}-${dIdx}`}>
               {/* Main Day Marker */}
               {day.latitude && day.longitude && visibleLayers.lodging && (
                 <Marker 
+                  key={`day-marker-${day.day}-${dIdx}`}
                   position={[day.latitude, day.longitude]} 
                   icon={createCustomIcon(MapPin, DAY_COLORS[(day.day - 1) % DAY_COLORS.length])}
                 >
@@ -240,7 +241,7 @@ export const ExpeditionMap: React.FC<ExpeditionMapProps> = ({ data, activeDay })
 
                 return (
                   <Marker 
-                    key={`wp-${day.day}-${i}`} 
+                    key={`wp-${day.day}-${dIdx}-${i}`} 
                     position={[wp.latitude, wp.longitude]} 
                     icon={createCustomIcon(icon, color)}
                   >

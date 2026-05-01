@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   MapPin, Users, Car, Heart, Settings, Plus, Trash2, Fuel, 
-  ChevronRight, ChevronLeft, Plane, Map as MapIcon, CheckCircle2, Home, Activity, DollarSign, Calendar, Smile
+  ChevronRight, ChevronLeft, Plane, Map as MapIcon, CheckCircle2, Home, Activity, DollarSign, Calendar, Smile,
+  Search, Filter, Bus, ShieldCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
@@ -90,12 +91,25 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
   const [user] = useAuthState(auth);
   const [preferredCurrency, setPreferredCurrency] = useState('USD');
   const [step, setStep] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
   const [activitySort, setActivitySort] = useState<'all' | 'free' | 'high_action'>('all');
   
   const [config, setConfig] = useState<TripConfig>({
     selectedRegions: [],
     travelers: [{ id: 1, name: 'Explorer 1', age: 30, hasLicense: true, budget: 1500 }],
-    vehicle: { rentalMode: 'rental', make: VEHICLE_OPTIONS[0].name, model: '', drivetrain: VEHICLE_OPTIONS[0].drivetain, fuelType: VEHICLE_OPTIONS[0].fuel, numberOfVehicles: 1, fuelConsumptionL100km: VEHICLE_OPTIONS[0].fuelL100km },
+    vehicles: [{ 
+      id: `v-${Date.now()}`,
+      type: 'private',
+      category: 'adventure',
+      rentalMode: 'rental',
+      make: VEHICLE_OPTIONS[0].name,
+      model: VEHICLE_OPTIONS[0].model,
+      drivetrain: VEHICLE_OPTIONS[0].drivetain,
+      fuelType: VEHICLE_OPTIONS[0].fuel,
+      fuelConsumptionL100km: VEHICLE_OPTIONS[0].fuelL100km,
+      luggageCapacity: VEHICLE_OPTIONS[0].luggage,
+      driverId: 1
+    }],
     selectedInterests: [],
     customPickups: [],
     logistics: {
@@ -134,9 +148,9 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
 
   const addCustomPickup = (e: any) => {
     e.originalEvent.preventDefault();
-    const { lng, lat } = e.lngLat;
+    const { lng, lat } = e.latlng || e.lngLat;
     const newPickup: PickupPoint = {
-      id: Date.now().toString(),
+      id: `manual-${Date.now()}-${Math.random()}`,
       lat,
       lng,
       type: config.customPickups.length === 0 ? 'start' : 'pickup',
@@ -279,6 +293,31 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     <h2 className="text-3xl font-black mb-2">The Canvas</h2>
                     <p className="text-stone-500 mb-6">Click areas on the map to plot your journey. Right-click to add custom pick-up points.</p>
                     
+                    <div className="mb-6">
+                      <label className="text-xs font-black uppercase text-stone-400 mb-3 block">Search & Add Any Destination</label>
+                      <LocationInput
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        onSelect={(s: LocationSuggestion) => {
+                          const newPickup: PickupPoint = {
+                            id: `custom-${Date.now()}`,
+                            lat: parseFloat(s.lat),
+                            lng: parseFloat(s.lon),
+                            type: 'pickup',
+                            reason: s.address.name || s.display_name.split(',')[0],
+                            order: config.customPickups.length + 1
+                          };
+                          setConfig(prev => ({
+                            ...prev,
+                            customPickups: [...prev.customPickups, newPickup]
+                          }));
+                          setSearchQuery(''); // Clear after selection
+                        }}
+                        placeholder="Search any town, park, or landmark..."
+                      />
+                      <p className="text-[10px] text-stone-400 mt-2 italic px-2">Type any location in Namibia to add it as a specific stop on your journey.</p>
+                    </div>
+
                     {config.selectedRegions.length > config.logistics.days && (
                       <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-800 rounded-xl text-sm font-medium">
                         <strong>Warning:</strong> You have selected {config.selectedRegions.length} regions but only have {config.logistics.days} days. The system will auto-optimize.
@@ -419,19 +458,6 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <h2 className="text-3xl font-black">The Crew</h2>
-                    <div className="flex items-center gap-2">
-                       <label className="text-xs font-bold text-stone-400 uppercase tracking-widest">Base Currency</label>
-                       <select 
-                         className="p-2 border rounded-xl font-bold bg-white text-stone-700 outline-none focus:ring-2 focus:ring-primary"
-                         value={preferredCurrency}
-                         onChange={e => setPreferredCurrency(e.target.value)}
-                       >
-                         <option value="USD">USD ($)</option>
-                         <option value="EUR">EUR (€)</option>
-                         <option value="GBP">GBP (£)</option>
-                         <option value="NAD">NAD (N$)</option>
-                       </select>
-                    </div>
                   </div>
                   <p className="text-stone-500 mb-8">Who are your fellow explorers?</p>
                   
@@ -517,69 +543,215 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
               )}
 
               {step === 3 && (
-                <div>
-                  <h2 className="text-3xl font-black mb-2">The Wheels</h2>
-                  <p className="text-stone-500 mb-8">What are we driving across the dunes?</p>
-                  
-                  <div className="mb-10 bg-stone-50 p-6 rounded-[2rem] border border-stone-200">
-                    <label className="block text-sm font-black uppercase text-stone-600 mb-4">Acquisition Method</label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                       <button onClick={() => setConfig({ ...config, vehicle: { ...config.vehicle, rentalMode: 'rental' } })} className={`p-6 rounded-2xl border-4 text-left transition-all ${config.vehicle.rentalMode === 'rental' ? 'border-primary bg-blue-50 ring-4 ring-blue-100' : 'border-white hover:border-stone-300 shadow-sm bg-white'}`}>
-                         <Car className={`w-8 h-8 mb-3 ${config.vehicle.rentalMode === 'rental' ? 'text-primary' : 'text-stone-400'}`} />
-                         <h4 className="font-black text-xl mb-1 text-stone-900">Book a Rental</h4>
-                         <p className="text-sm font-medium text-stone-500">Pick up a fully equipped vehicle upon landing.</p>
-                       </button>
-                       <button onClick={() => setConfig({ ...config, vehicle: { ...config.vehicle, rentalMode: 'own' } })} className={`p-6 rounded-2xl border-4 text-left transition-all ${config.vehicle.rentalMode === 'own' ? 'border-primary bg-blue-50 ring-4 ring-blue-100' : 'border-white hover:border-stone-300 shadow-sm bg-white'}`}>
-                         <Home className={`w-8 h-8 mb-3 ${config.vehicle.rentalMode === 'own' ? 'text-primary' : 'text-stone-400'}`} />
-                         <h4 className="font-black text-xl mb-1 text-stone-900">Self-Owned</h4>
-                         <p className="text-sm font-medium text-stone-500">Driving my own or a locally supplied car.</p>
-                       </button>
+                <div className="space-y-8">
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <h2 className="text-4xl font-black mb-2">The Wheels</h2>
+                      <p className="text-stone-500 font-medium">How are you getting around the dunes?</p>
                     </div>
+                    {config.vehicles.length < config.travelers.filter(t => t.hasLicense).length && (
+                      <button 
+                        onClick={() => {
+                          const firstOption = VEHICLE_OPTIONS[0];
+                          setConfig(prev => ({
+                            ...prev,
+                            vehicles: [...prev.vehicles, {
+                              id: `v-${Date.now()}`,
+                              type: 'private',
+                              category: 'adventure',
+                              rentalMode: 'rental',
+                              make: firstOption.name,
+                              model: firstOption.model,
+                              drivetrain: firstOption.drivetain,
+                              fuelType: firstOption.fuel,
+                              fuelConsumptionL100km: firstOption.fuelL100km,
+                              luggageCapacity: firstOption.luggage,
+                              driverId: prev.travelers.find(t => t.hasLicense && !prev.vehicles.some(v => v.driverId === t.id))?.id
+                            }]
+                          }));
+                        }}
+                        className="flex items-center gap-2 bg-amber-600 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-amber-600/20 hover:bg-amber-700 transition-all hover:scale-105"
+                      >
+                        <Plus className="w-5 h-5" /> Add Another Vehicle
+                      </button>
+                    )}
                   </div>
 
-                  {/* Multi-car question — only if 2+ licensed drivers */}
-                  {config.travelers.filter(t => t.hasLicense).length >= 2 && (
-                    <div className="mb-10 bg-amber-50 p-6 rounded-[2rem] border border-amber-200">
-                      <label className="block text-sm font-black uppercase text-amber-800 mb-3">How many vehicles in your convoy?</label>
-                      <p className="text-amber-700 text-sm font-medium mb-4">You have {config.travelers.filter(t => t.hasLicense).length} licensed drivers. Will you be splitting into separate vehicles?</p>
-                      <div className="flex gap-3">
-                        {[1, 2, 3].map(n => (
-                          <button key={n} onClick={() => setConfig(prev => ({ ...prev, vehicle: { ...prev.vehicle, numberOfVehicles: n } }))} className={`px-8 py-3 rounded-xl font-black text-lg transition-all ${config.vehicle.numberOfVehicles === n ? 'bg-amber-600 text-white shadow-lg' : 'bg-white border-2 border-amber-200 text-amber-700 hover:border-amber-400'}`}>
-                            {n} {n === 1 ? 'Vehicle' : 'Vehicles'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <label className="block text-sm font-black uppercase text-stone-600 mb-4">Select Vehicle Type</label>
-                  <motion.div variants={containerVariants} initial="hidden" animate="show" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                    {VEHICLE_OPTIONS.map(v => (
+                  <div className="space-y-6">
+                    {config.vehicles.map((vehicle, vIdx) => (
                       <motion.div 
-                        variants={itemVariants}
-                        key={v.id}
-                        onClick={() => setConfig(prev => ({ 
-                          ...prev, 
-                          vehicle: { ...prev.vehicle, make: v.name, model: '', drivetrain: v.drivetain, fuelType: v.fuel, fuelConsumptionL100km: v.fuelL100km } 
-                        }))}
-                        className={`relative h-52 rounded-[2rem] overflow-hidden cursor-pointer group transition-all border-4 ${config.vehicle.make === v.name ? 'border-primary shadow-xl ring-4 ring-blue-50' : 'border-white shadow-sm hover:shadow-md'}`}
+                        key={vehicle.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-stone-50 border border-stone-200 rounded-[2.5rem] p-8 relative overflow-hidden"
                       >
-                        <img src={v.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-[10s] group-hover:scale-110" alt={v.name} referrerPolicy="no-referrer" onError={(e) => { (e.target as HTMLImageElement).src = 'https://picsum.photos/seed/vehicle/800/600'; }} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-stone-900/90 via-stone-900/40 to-transparent flex flex-col justify-end p-5">
-                           <h4 className="font-black text-white text-base leading-tight">{v.name}</h4>
-                           <p className="text-stone-300 text-xs font-medium mt-1 opacity-80 group-hover:opacity-100 transition line-clamp-2">{v.desc}</p>
-                           <div className="flex gap-2 mt-2 flex-wrap">
-                             <span className="px-2 py-1 bg-white/20 backdrop-blur-md rounded text-[9px] font-black uppercase text-white">{v.drivetain}</span>
-                             <span className="px-2 py-1 bg-white/20 backdrop-blur-md rounded text-[9px] font-black uppercase text-white">{v.fuel}</span>
-                             {v.fuelL100km > 0 && <span className="px-2 py-1 bg-emerald-500/80 backdrop-blur-md rounded text-[9px] font-black uppercase text-white">{v.fuelL100km}L/100km</span>}
-                           </div>
-                        </div>
-                        {config.vehicle.make === v.name && (
-                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute top-4 right-4 bg-primary p-2 rounded-full shadow-lg"><CheckCircle2 className="w-4 h-4 text-white" /></motion.div>
+                        {config.vehicles.length > 1 && (
+                          <button 
+                            onClick={() => setConfig(prev => ({ ...prev, vehicles: prev.vehicles.filter(v => v.id !== vehicle.id) }))}
+                            className="absolute top-6 right-6 p-2 text-stone-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
                         )}
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                          {/* Left Side: Type & Driver */}
+                          <div className="lg:col-span-4 space-y-6">
+                            <div>
+                              <label className="text-[10px] font-black uppercase text-stone-400 tracking-widest mb-3 block">Transport Type</label>
+                              <div className="flex bg-white p-1 rounded-2xl border border-stone-200 shadow-sm">
+                                {['private', 'public', 'guided'].map((type) => (
+                                  <button
+                                    key={type}
+                                    onClick={() => setConfig(prev => ({
+                                      ...prev,
+                                      vehicles: prev.vehicles.map(v => v.id === vehicle.id ? { 
+                                        ...v, 
+                                        type: type as any,
+                                        category: type === 'public' ? 'public' : 'adventure',
+                                        rentalMode: type === 'private' ? 'rental' : undefined
+                                      } : v)
+                                    }))}
+                                    className={`flex-1 py-2.5 rounded-xl text-xs font-black capitalize transition-all ${vehicle.type === type ? 'bg-stone-900 text-white shadow-md' : 'text-stone-500 hover:bg-stone-100'}`}
+                                  >
+                                    {type}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            {vehicle.type === 'private' && (
+                              <div>
+                                <label className="text-[10px] font-black uppercase text-stone-400 tracking-widest mb-3 block">Acquisition</label>
+                                <div className="flex bg-white p-1 rounded-2xl border border-stone-200 shadow-sm">
+                                  {['rental', 'own'].map((mode) => (
+                                    <button
+                                      key={mode}
+                                      onClick={() => setConfig(prev => ({
+                                        ...prev,
+                                        vehicles: prev.vehicles.map(v => v.id === vehicle.id ? { ...v, rentalMode: mode as any } : v)
+                                      }))}
+                                      className={`flex-1 py-2.5 rounded-xl text-xs font-black capitalize transition-all ${vehicle.rentalMode === mode ? 'bg-amber-600 text-white shadow-md' : 'text-stone-500 hover:bg-stone-100'}`}
+                                    >
+                                      {mode}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            <div>
+                              <label className="text-[10px] font-black uppercase text-stone-400 tracking-widest mb-3 block">Primary Driver / Lead</label>
+                              <select 
+                                value={vehicle.driverId || ''}
+                                onChange={(e) => setConfig(prev => ({
+                                  ...prev,
+                                  vehicles: prev.vehicles.map(v => v.id === vehicle.id ? { ...v, driverId: Number(e.target.value) } : v)
+                                }))}
+                                className="w-full bg-white border border-stone-200 p-4 rounded-2xl font-bold text-stone-700 outline-none focus:border-amber-600 transition shadow-sm appearance-none"
+                              >
+                                <option value="">Select a traveler...</option>
+                                {config.travelers.map(t => (
+                                  <option key={t.id} value={t.id}>{t.name} {t.hasLicense ? '(Licensed)' : '(Passenger Only)'}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Stats Display */}
+                            <div className="grid grid-cols-2 gap-3 pt-4">
+                              <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm">
+                                <Fuel className="w-4 h-4 text-amber-600 mb-2" />
+                                <p className="text-[10px] font-black text-stone-400 uppercase">Consumption</p>
+                                <p className="text-sm font-black text-stone-900">{vehicle.fuelConsumptionL100km || 0}L/100km</p>
+                              </div>
+                              <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm">
+                                <Settings className="w-4 h-4 text-blue-600 mb-2" />
+                                <p className="text-[10px] font-black text-stone-400 uppercase">Luggage</p>
+                                <p className="text-sm font-black text-stone-900">{vehicle.luggageCapacity || 0} Large Bags</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right Side: Selection Drill-down */}
+                          <div className="lg:col-span-8 flex flex-col">
+                            <label className="text-[10px] font-black uppercase text-stone-400 tracking-widest mb-3 block">Select Vehicle Model</label>
+                            
+                            {/* Category Filter */}
+                            <div className="flex flex-wrap gap-2 mb-6">
+                              {(vehicle.type === 'private' ? ['adventure', 'standard', 'two-wheels'] : ['public']).map((cat) => (
+                                <button
+                                  key={cat}
+                                  onClick={() => setConfig(prev => ({
+                                    ...prev,
+                                    vehicles: prev.vehicles.map(v => v.id === vehicle.id ? { ...v, category: cat as any } : v)
+                                  }))}
+                                  className={`px-4 py-2 rounded-full text-xs font-black border-2 transition-all ${vehicle.category === cat ? 'bg-amber-100 border-amber-600 text-amber-900' : 'bg-white border-stone-200 text-stone-500 hover:border-stone-400'}`}
+                                >
+                                  {cat.replace('-', ' ')}
+                                </button>
+                              ))}
+                            </div>
+
+                            {/* Vehicle Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                              {VEHICLE_OPTIONS
+                                .filter(opt => opt.category === vehicle.category)
+                                .map(opt => (
+                                  <div 
+                                    key={opt.id}
+                                    onClick={() => setConfig(prev => ({
+                                      ...prev,
+                                      vehicles: prev.vehicles.map(v => v.id === vehicle.id ? { 
+                                        ...v, 
+                                        make: opt.name, 
+                                        model: opt.model, 
+                                        drivetrain: opt.drivetain, 
+                                        fuelType: opt.fuel, 
+                                        fuelConsumptionL100km: opt.fuelL100km, 
+                                        luggageCapacity: opt.luggage,
+                                        ticketCost: (opt as any).ticketCost,
+                                        frequency: (opt as any).frequency
+                                      } : v)
+                                    }))}
+                                    className={`p-4 rounded-3xl border-4 transition-all cursor-pointer flex gap-4 ${vehicle.make === opt.name ? 'border-amber-600 bg-white shadow-xl' : 'border-white bg-white/50 hover:bg-white hover:border-stone-200 shadow-sm'}`}
+                                  >
+                                    <div className="w-20 h-20 rounded-2xl overflow-hidden shrink-0">
+                                      <img src={opt.image} className="w-full h-full object-cover" alt={opt.name} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <h4 className="font-black text-sm text-stone-900 leading-tight truncate">{opt.name}</h4>
+                                      <p className="text-[10px] font-bold text-stone-400 mb-2 truncate">{opt.model}</p>
+                                      <div className="flex gap-2">
+                                        {opt.fuelL100km > 0 && <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-black rounded">{opt.fuelL100km}L</span>}
+                                        <span className="px-1.5 py-0.5 bg-stone-100 text-stone-600 text-[9px] font-black rounded">{opt.luggage} Bags</span>
+                                      </div>
+                                    </div>
+                                    {vehicle.make === opt.name && (
+                                      <div className="self-center">
+                                        <CheckCircle2 className="w-5 h-5 text-amber-600" />
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                            </div>
+
+                            {vehicle.type === 'public' && vehicle.ticketCost && (
+                              <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <Bus className="w-6 h-6 text-blue-600" />
+                                  <div>
+                                    <p className="text-[10px] font-black text-blue-400 uppercase">Ticket Cost / Frequency</p>
+                                    <p className="text-sm font-black text-blue-900">{getCurrencySymbol()}{vehicle.ticketCost} • {vehicle.frequency}</p>
+                                  </div>
+                                </div>
+                                <ShieldCheck className="w-6 h-6 text-blue-200" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </motion.div>
                     ))}
-                  </motion.div>
+                  </div>
                 </div>
               )}
 

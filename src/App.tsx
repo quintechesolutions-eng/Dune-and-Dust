@@ -73,6 +73,7 @@ export default function App() {
           pace: config.logistics.pace,
           detailLevel: config.logistics.detailLevel,
           baseCurrency: config.baseCurrency || 'USD',
+          config: config,
           data: result,
           likes: 0,
           isPublic: false,
@@ -134,6 +135,7 @@ export default function App() {
           overview: result.tripSummary.overview,
           data: result,
           baseCurrency: currency,
+          config: { baseCurrency: currency },
           likes: 0,
           isPublic: false,
           createdAt: serverTimestamp()
