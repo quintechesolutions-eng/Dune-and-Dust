@@ -14,11 +14,15 @@ export interface Vehicle {
   make: string;
   model: string;
   drivetrain?: string;
+  transmission?: 'manual' | 'automatic';
+  isHybrid?: boolean;
   fuelType?: string;
   fuelConsumptionL100km?: number;
-  luggageCapacity: number; // Number of large bags
-  ticketCost?: number;
-  frequency?: string;
+  maxPassengers: number;
+  maxLargeBags: number;
+  maxSmallBags: number;
+  currentLargeBags: number;
+  currentSmallBags: number;
   driverId?: number; // Linked to Traveler.id
 }
 
@@ -42,7 +46,7 @@ export interface PickupPoint {
   id: string;
   lat: number;
   lng: number;
-  type: 'start' | 'pickup';
+  type: 'start' | 'stop' | 'pickup';
   reason: string;
   order: number;
 }

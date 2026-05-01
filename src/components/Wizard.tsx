@@ -4,8 +4,8 @@ import {
   ChevronRight, ChevronLeft, Plane, Map as MapIcon, CheckCircle2, Home, Activity, DollarSign, Calendar, Smile,
   Search, Filter, Bus, ShieldCheck
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { motion, AnimatePresence, Reorder } from 'motion/react';
+import { MapContainer, TileLayer, Marker, useMapEvents, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -93,6 +93,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
   const [step, setStep] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [activitySort, setActivitySort] = useState<'all' | 'free' | 'high_action'>('all');
+  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, lat: number, lng: number } | null>(null);
   
   const [config, setConfig] = useState<TripConfig>({
     selectedRegions: [],
@@ -100,14 +101,19 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
     vehicles: [{ 
       id: `v-${Date.now()}`,
       type: 'private',
-      category: 'adventure',
+      category: 'rugged_4x4',
       rentalMode: 'rental',
       make: VEHICLE_OPTIONS[0].name,
       model: VEHICLE_OPTIONS[0].model,
-      drivetrain: VEHICLE_OPTIONS[0].drivetain,
+      drivetrain: VEHICLE_OPTIONS[0].drivetrain,
+      transmission: VEHICLE_OPTIONS[0].transmission as any,
       fuelType: VEHICLE_OPTIONS[0].fuel,
       fuelConsumptionL100km: VEHICLE_OPTIONS[0].fuelL100km,
-      luggageCapacity: VEHICLE_OPTIONS[0].luggage,
+      maxPassengers: VEHICLE_OPTIONS[0].maxPassengers,
+      maxLargeBags: VEHICLE_OPTIONS[0].maxLargeBags,
+      maxSmallBags: VEHICLE_OPTIONS[0].maxSmallBags,
+      currentLargeBags: 0,
+      currentSmallBags: 0,
       driverId: 1
     }],
     selectedInterests: [],
@@ -146,20 +152,26 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
     }));
   };
 
-  const addCustomPickup = (e: any) => {
-    e.originalEvent.preventDefault();
-    const { lng, lat } = e.latlng || e.lngLat;
-    const newPickup: PickupPoint = {
-      id: `manual-${Date.now()}-${Math.random()}`,
+  const addRoutingPoint = (lat: number, lng: number, type: 'start' | 'stop' | 'pickup', reason: string = '') => {
+    const newPoint: PickupPoint = {
+      id: `${type}-${Date.now()}-${Math.random()}`,
       lat,
       lng,
-      type: config.customPickups.length === 0 ? 'start' : 'pickup',
-      reason: '',
+      type,
+      reason,
       order: config.customPickups.length + 1
     };
     setConfig(prev => ({
       ...prev,
-      customPickups: [...prev.customPickups, newPickup]
+      customPickups: [...prev.customPickups, newPoint]
+    }));
+    setContextMenu(null);
+  };
+
+  const reorderPoints = (newPoints: PickupPoint[]) => {
+    setConfig(prev => ({
+      ...prev,
+      customPickups: newPoints.map((p, i) => ({ ...p, order: i + 1 }))
     }));
   };
 
@@ -250,6 +262,9 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
     show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
   };
 
+  const [vehicleFilter, setVehicleFilter] = useState('');
+  const [vehicleSort, setVehicleSort] = useState<'all' | 'hybrid' | '4x4' | 'automatic'>('all');
+
   // Convert warning value based on currency (Rough generic mock conversion just for the warning to look sane, USD baseline is $60)
   const currencyRates: Record<string, number> = { USD: 1, EUR: 0.9, GBP: 0.75, NAD: 18 };
   const getBudgetWarningValue = () => {
@@ -299,19 +314,8 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                         value={searchQuery}
                         onChange={setSearchQuery}
                         onSelect={(s: LocationSuggestion) => {
-                          const newPickup: PickupPoint = {
-                            id: `custom-${Date.now()}`,
-                            lat: parseFloat(s.lat),
-                            lng: parseFloat(s.lon),
-                            type: 'pickup',
-                            reason: s.address.name || s.display_name.split(',')[0],
-                            order: config.customPickups.length + 1
-                          };
-                          setConfig(prev => ({
-                            ...prev,
-                            customPickups: [...prev.customPickups, newPickup]
-                          }));
-                          setSearchQuery(''); // Clear after selection
+                          addRoutingPoint(parseFloat(s.lat), parseFloat(s.lon), 'stop', s.address.name || s.display_name.split(',')[0]);
+                          setSearchQuery(''); 
                         }}
                         placeholder="Search any town, park, or landmark..."
                       />
@@ -337,9 +341,24 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                          />
                          
                          <MapEventsHandler onRightClick={(e: any) => {
-                            const { lat, lng } = e.latlng;
-                            addCustomPickup({ lngLat: { lng, lat }, originalEvent: e.originalEvent });
-                         }} />
+                             setContextMenu({
+                               x: e.originalEvent.clientX,
+                               y: e.originalEvent.clientY,
+                               lat: e.latlng.lat,
+                               lng: e.latlng.lng
+                             });
+                          }} />
+
+                          {/* Route Polyline */}
+                          {config.customPickups.length > 1 && (
+                            <Polyline 
+                              positions={config.customPickups.map(p => [p.lat, p.lng])}
+                              color="#f59e0b"
+                              weight={4}
+                              opacity={0.6}
+                              dashArray="10, 10"
+                            />
+                          )}
 
                          {NAMIBIA_REGIONS.map(r => {
                            const isSelected = config.selectedRegions.includes(r.id);
@@ -374,25 +393,60 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
 
                          {/* Custom Pickups Markers */}
                          {config.customPickups.map((p) => {
-                            const pickupMarkup = renderToStaticMarkup(
-                              <div className="flex flex-col items-center group relative z-20">
-                                 <div className="bg-stone-900 text-white border border-stone-700 text-[10px] font-bold px-2 py-1 rounded-lg mb-1 shadow-xl whitespace-nowrap">
-                                    {p.type === 'start' ? 'Start' : `Stop ${p.order}`}
-                                 </div>
-                                 <div className={`w-6 h-6 rounded-full border-2 border-white shadow-md flex items-center justify-center ${p.type === 'start' ? 'bg-emerald-500' : 'bg-amber-500'}`}>
-                                    <MapPin className="w-3 h-3 text-white" />
-                                 </div>
-                              </div>
-                            );
-                            return (
-                              <Marker 
-                                key={p.id} 
-                                position={[p.lat, p.lng]} 
-                                icon={L.divIcon({ html: pickupMarkup, className: '', iconSize: [100, 50], iconAnchor: [50, 45] })}
-                              />
-                            );
-                         })}
-                      </MapContainer>
+                             const pickupMarkup = renderToStaticMarkup(
+                               <div className="flex flex-col items-center group relative z-20">
+                                  <div className="bg-stone-900 text-white border border-stone-700 text-[10px] font-bold px-2 py-1 rounded-lg mb-1 shadow-xl whitespace-nowrap">
+                                     {p.type === 'start' ? 'Start' : p.type === 'stop' ? `Stop ${p.order}` : `Pickup ${p.order}`}
+                                  </div>
+                                  <div className={`w-6 h-6 rounded-full border-2 border-white shadow-md flex items-center justify-center ${p.type === 'start' ? 'bg-emerald-500' : p.type === 'stop' ? 'bg-blue-500' : 'bg-amber-500'}`}>
+                                     <MapPin className="w-3 h-3 text-white" />
+                                  </div>
+                               </div>
+                             );
+                             return (
+                               <Marker 
+                                 key={p.id} 
+                                 position={[p.lat, p.lng]} 
+                                 icon={L.divIcon({ html: pickupMarkup, className: '', iconSize: [100, 50], iconAnchor: [50, 45] })}
+                               />
+                             );
+                          })}
+                       </MapContainer>
+
+                       {/* Map Context Menu */}
+                       <AnimatePresence>
+                         {contextMenu && (
+                           <motion.div 
+                             initial={{ opacity: 0, scale: 0.9 }}
+                             animate={{ opacity: 1, scale: 1 }}
+                             exit={{ opacity: 0, scale: 0.9 }}
+                             style={{ left: contextMenu.x, top: contextMenu.y }}
+                             className="fixed z-[9999] bg-white rounded-2xl shadow-2xl border border-stone-100 overflow-hidden w-48 p-2"
+                           >
+                             <button 
+                               onClick={() => addRoutingPoint(contextMenu.lat, contextMenu.lng, 'stop')}
+                               className="w-full text-left p-3 hover:bg-blue-50 text-stone-700 font-bold text-xs rounded-xl flex items-center gap-3 group"
+                             >
+                               <div className="p-1.5 bg-blue-100 rounded-lg group-hover:bg-white"><MapPin className="w-3.5 h-3.5 text-blue-600" /></div>
+                               Add as Stop
+                             </button>
+                             <button 
+                               onClick={() => addRoutingPoint(contextMenu.lat, contextMenu.lng, 'pickup')}
+                               className="w-full text-left p-3 hover:bg-amber-50 text-stone-700 font-bold text-xs rounded-xl flex items-center gap-3 group"
+                             >
+                               <div className="p-1.5 bg-amber-100 rounded-lg group-hover:bg-white"><Car className="w-3.5 h-3.5 text-amber-600" /></div>
+                               Add as Pickup
+                             </button>
+                             <div className="border-t border-stone-100 my-1" />
+                             <button 
+                               onClick={() => setContextMenu(null)}
+                               className="w-full text-left p-3 hover:bg-stone-100 text-stone-400 font-bold text-[10px] uppercase tracking-widest rounded-xl text-center"
+                             >
+                               Cancel
+                             </button>
+                           </motion.div>
+                         )}
+                       </AnimatePresence>
                     </div>
                   </div>
                   
@@ -402,40 +456,62 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                      <div className="bg-stone-50 border border-stone-100 rounded-3xl p-6">
                        <h4 className="text-sm font-black text-stone-900 mb-4 flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" /> Selected Routing Points</h4>
                        
-                       {/* Custom Stops Panel */}
-                       {config.customPickups.length > 0 && (
-                         <div className="space-y-3 mb-6">
-                           <p className="text-xs font-bold text-stone-400 uppercase tracking-widest">Custom Stops</p>
-                           {config.customPickups.map(p => (
-                             <div key={p.id} className="bg-white p-3 rounded-xl border border-stone-200 shadow-sm text-sm flex flex-col gap-2 relative">
-                               <div className="flex gap-2 items-center">
-                                 <select 
-                                   value={p.type} 
-                                   onChange={e => updatePickup(p.id, { type: e.target.value as any })}
-                                   className="bg-stone-100 text-stone-700 text-xs font-bold px-2 py-1 rounded"
-                                 >
-                                   <option value="start">Start Location</option>
-                                   <option value="pickup">Mid-Trip Pick-up/Stop</option>
-                                 </select>
-                                 <LocationInput
-                                   value={p.reason}
-                                   onChange={val => updatePickup(p.id, { reason: val })}
-                                   onSelect={(s: LocationSuggestion) => {
-                                     updatePickup(p.id, { 
-                                       reason: s.address.name || s.display_name.split(',')[0],
-                                       lat: parseFloat(s.lat),
-                                       lng: parseFloat(s.lon)
-                                     });
-                                   }}
-                                   placeholder="e.g. Home, Airport, Hotel..."
-                                   className="flex-1"
-                                 />
-                               </div>
-                               <button onClick={() => removePickup(p.id)} className="absolute top-2 right-2 p-1 text-red-400 hover:text-red-600 z-10"><Trash2 className="w-4 h-4"/></button>
-                             </div>
-                           ))}
-                         </div>
-                       )}
+                       {/* Custom Routing Points (Draggable) */}
+                       {config.customPickups.length > 0 ? (
+                          <div className="mb-6">
+                            <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3">Planned Trajectory</p>
+                            <Reorder.Group 
+                              axis="y" 
+                              values={config.customPickups} 
+                              onReorder={reorderPoints}
+                              className="space-y-3"
+                            >
+                              {config.customPickups.map(p => (
+                                <Reorder.Item 
+                                  key={p.id} 
+                                  value={p}
+                                  className="bg-white p-3 rounded-xl border border-stone-200 shadow-sm text-sm flex flex-col gap-2 relative cursor-grab active:cursor-grabbing hover:border-amber-300 transition-colors"
+                                >
+                                  <div className="flex gap-2 items-center pr-8">
+                                    <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${p.type === 'start' ? 'bg-emerald-100 text-emerald-600' : p.type === 'stop' ? 'bg-blue-100 text-blue-600' : 'bg-amber-100 text-amber-600'}`}>
+                                       {p.type === 'start' ? 'S' : p.type === 'stop' ? <MapPin className="w-4 h-4" /> : <Car className="w-4 h-4" />}
+                                    </div>
+                                    <div className="flex-1">
+                                      <select 
+                                        value={p.type} 
+                                        onChange={e => updatePickup(p.id, { type: e.target.value as any })}
+                                        className="bg-stone-50 text-stone-500 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded border-0 outline-none mb-1 block"
+                                      >
+                                        <option value="start">Start Location</option>
+                                        <option value="stop">Waypoint / Stop</option>
+                                        <option value="pickup">Pickup Point</option>
+                                      </select>
+                                      <LocationInput
+                                        value={p.reason}
+                                        onChange={val => updatePickup(p.id, { reason: val })}
+                                        onSelect={(s: LocationSuggestion) => {
+                                          updatePickup(p.id, { 
+                                            reason: s.address.name || s.display_name.split(',')[0],
+                                            lat: parseFloat(s.lat),
+                                            lng: parseFloat(s.lon)
+                                          });
+                                        }}
+                                        placeholder="e.g. Home, Airport, Hotel..."
+                                        className="w-full text-xs"
+                                      />
+                                    </div>
+                                  </div>
+                                  <button onClick={() => removePickup(p.id)} className="absolute top-3 right-3 p-1.5 text-stone-300 hover:text-red-500 transition-colors"><Trash2 className="w-4 h-4"/></button>
+                                </Reorder.Item>
+                              ))}
+                            </Reorder.Group>
+                          </div>
+                        ) : (
+                          <div className="py-8 text-center bg-stone-100/50 rounded-2xl border-2 border-dashed border-stone-200 mb-6">
+                            <MapIcon className="w-8 h-8 text-stone-300 mx-auto mb-2" />
+                            <p className="text-xs font-bold text-stone-400">Right-click the map to add stops</p>
+                          </div>
+                        )}
 
                        <div>
                          <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-3">Expedition Regions</p>
@@ -555,18 +631,23 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                           const firstOption = VEHICLE_OPTIONS[0];
                           setConfig(prev => ({
                             ...prev,
-                            vehicles: [...prev.vehicles, {
-                              id: `v-${Date.now()}`,
-                              type: 'private',
-                              category: 'adventure',
+                            vehicles: [...prev.vehicles, { 
+                              id: `v-${Date.now()}`, 
+                              type: 'private', 
+                              category: 'rugged_4x4',
                               rentalMode: 'rental',
-                              make: firstOption.name,
-                              model: firstOption.model,
-                              drivetrain: firstOption.drivetain,
-                              fuelType: firstOption.fuel,
-                              fuelConsumptionL100km: firstOption.fuelL100km,
-                              luggageCapacity: firstOption.luggage,
-                              driverId: prev.travelers.find(t => t.hasLicense && !prev.vehicles.some(v => v.driverId === t.id))?.id
+                              make: VEHICLE_OPTIONS[0].name,
+                              model: VEHICLE_OPTIONS[0].model,
+                              drivetrain: VEHICLE_OPTIONS[0].drivetrain,
+                              transmission: VEHICLE_OPTIONS[0].transmission as any,
+                              fuelType: VEHICLE_OPTIONS[0].fuel,
+                              fuelConsumptionL100km: VEHICLE_OPTIONS[0].fuelL100km,
+                              maxPassengers: VEHICLE_OPTIONS[0].maxPassengers,
+                              maxLargeBags: VEHICLE_OPTIONS[0].maxLargeBags,
+                              maxSmallBags: VEHICLE_OPTIONS[0].maxSmallBags,
+                              currentLargeBags: 0,
+                              currentSmallBags: 0,
+                              driverId: prev.travelers.find(t => t.hasLicense && !prev.vehicles.some(v => v.driverId === t.id))?.id || prev.travelers[0].id
                             }]
                           }));
                         }}

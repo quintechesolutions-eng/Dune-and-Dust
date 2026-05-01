@@ -74,27 +74,26 @@ export const LOADING_FACTS = [
   "Ensuring the itinerary matches the ages of your travelers...",
   "Generating an immersive, minute-by-minute breakdown..."
 ];
-
 export const VEHICLE_OPTIONS = [
-  // Adventure
-  { id: 'heavy_4x4', category: 'adventure', name: 'Heavy-Duty Expedition 4x4', model: 'Land Cruiser 79', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 14, luggage: 6, desc: 'The gold standard for African expeditions. Invincible on any terrain.', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
-  { id: 'standard_4x4', category: 'adventure', name: 'Standard 4x4 SUV', model: 'Toyota Fortuner', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 10, luggage: 5, desc: 'Reliable, comfortable, handles all Namibian gravel roads.', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80' },
-  { id: 'hilux_double', category: 'adventure', name: 'Double Cab Bakkie', model: 'Toyota Hilux', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 11, luggage: 8, desc: 'Load bed for gear, rooftop tent ready, Namibia\'s workhorse.', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&w=800&q=80' },
-  { id: 'campervan', category: 'adventure', name: '4x4 Camper Motorhome', model: 'Iveco Daily 4x4', drivetain: '4x4', fuel: 'Diesel', fuelL100km: 18, luggage: 10, desc: 'Fully integrated living space for maximum self-sufficiency.', image: 'https://images.unsplash.com/photo-1523987355523-c7b5b0dd90a7?auto=format&fit=crop&w=800&q=80' },
+  // Eco & Hybrid
+  { id: 'hybrid_cross', category: 'eco_hybrid', name: 'Eco Crossover', model: 'Toyota Corolla Cross Hybrid', drivetrain: 'FWD', transmission: 'automatic', isHybrid: true, fuel: 'Petrol/Electric', fuelL100km: 4.3, maxPassengers: 5, maxLargeBags: 2, maxSmallBags: 3, desc: 'Ultra-efficient, smooth on tar and well-graded gravel.', image: 'https://images.unsplash.com/photo-1621135802920-133df287f89c?auto=format&fit=crop&w=800&q=80' },
+  { id: 'hybrid_suv', category: 'eco_hybrid', name: 'Premium Hybrid SUV', model: 'Toyota RAV4 Hybrid', drivetrain: 'AWD', transmission: 'automatic', isHybrid: true, fuel: 'Petrol/Electric', fuelL100km: 4.8, maxPassengers: 5, maxLargeBags: 3, maxSmallBags: 4, desc: 'The perfect balance of efficiency and Namibian capability.', image: 'https://images.unsplash.com/photo-1566473065146-d206f3984722?auto=format&fit=crop&w=800&q=80' },
   
-  // Standard
-  { id: 'sedan', category: 'standard', name: 'Standard Sedan', model: 'Toyota Corolla', drivetain: '2WD', fuel: 'Petrol', fuelL100km: 6, luggage: 3, desc: 'Fuel efficient and comfortable for tarred road journeys.', image: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=800&q=80' },
-  { id: 'hatchback', category: 'standard', name: 'Compact Hatchback', model: 'VW Polo', drivetain: '2WD', fuel: 'Petrol', fuelL100km: 5.5, luggage: 2, desc: 'Perfect for solo travelers or couples on a budget.', image: 'https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=800&q=80' },
-  { id: 'station_wagon', category: 'standard', name: 'Station Wagon', model: 'VW Golf Variant', drivetain: '2WD', fuel: 'Diesel', fuelL100km: 6.5, luggage: 5, desc: 'Extra luggage space for families sticking to major routes.', image: 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=800&q=80' },
+  // Rugged 4x4
+  { id: 'heavy_4x4', category: 'rugged_4x4', name: 'Heavy-Duty Expedition 4x4', model: 'Land Cruiser 79', drivetrain: '4x4', transmission: 'manual', fuel: 'Diesel', fuelL100km: 14, maxPassengers: 5, maxLargeBags: 6, maxSmallBags: 4, desc: 'The gold standard for African expeditions. Invincible.', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
+  { id: 'standard_4x4', category: 'rugged_4x4', name: 'Standard 4x4 SUV', model: 'Toyota Fortuner', drivetrain: '4x4', transmission: 'automatic', fuel: 'Diesel', fuelL100km: 9.5, maxPassengers: 7, maxLargeBags: 4, maxSmallBags: 3, desc: 'Reliable, comfortable, handles all Namibian gravel roads.', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80' },
+  { id: 'hilux_double', category: 'rugged_4x4', name: 'Double Cab Bakkie', model: 'Toyota Hilux', drivetrain: '4x4', transmission: 'automatic', fuel: 'Diesel', fuelL100km: 10.5, maxPassengers: 5, maxLargeBags: 5, maxSmallBags: 5, desc: 'Load bed for gear, rooftop tent ready, Namibia\'s workhorse.', image: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&w=800&q=80' },
+  { id: 'jimny', category: 'rugged_4x4', name: 'Compact 4x4', model: 'Suzuki Jimny', drivetrain: '4x4', transmission: 'automatic', fuel: 'Petrol', fuelL100km: 7.5, maxPassengers: 4, maxLargeBags: 1, maxSmallBags: 2, desc: 'Small but mighty. Perfect for couples on a budget.', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
 
-  // Two-Wheels
-  { id: 'adv_motorcycle', category: 'two-wheels', name: 'Adventure Motorcycle', model: 'BMW R1250GS', drivetain: '2WD', fuel: 'Petrol', fuelL100km: 5, luggage: 1, desc: 'For solo riders seeking extreme freedom on gravel paths.', image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80' },
-  { id: 'bicycle', category: 'two-wheels', name: 'Touring Bicycle', model: 'Surly Ogre', drivetain: 'Manual', fuel: 'None', fuelL100km: 0, luggage: 1, desc: 'The ultimate slow-travel challenge. Requires peak fitness.', image: 'https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=800&q=80' },
+  // Group Travel
+  { id: 'minivan', category: 'group_travel', name: 'Luxury Minivan', model: 'VW Caravelle', drivetrain: 'FWD', transmission: 'automatic', fuel: 'Diesel', fuelL100km: 8.5, maxPassengers: 8, maxLargeBags: 5, maxSmallBags: 6, desc: 'Premium group comfort for long distance tar travel.', image: 'https://images.unsplash.com/photo-1554672408-730436b60dde?auto=format&fit=crop&w=800&q=80' },
+  { id: 'sprinter', category: 'group_travel', name: 'Touring Bus', model: 'Mercedes Sprinter', drivetrain: 'RWD', transmission: 'manual', fuel: 'Diesel', fuelL100km: 12, maxPassengers: 14, maxLargeBags: 10, maxSmallBags: 14, desc: 'Large group expeditions with professional drivers.', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80' },
 
-  // Public Transport
-  { id: 'taxi', category: 'public', name: 'Inter-city Shared Taxi', model: 'Quantum Minibus', drivetain: '2WD', fuel: 'Petrol', luggage: 1, desc: 'The most common way locals travel between towns.', ticketCost: 15, frequency: 'Daily (Morning)', image: 'https://images.unsplash.com/photo-1554672408-730436b60dde?auto=format&fit=crop&w=800&q=80' },
-  { id: 'bus', category: 'public', name: 'Luxury Inter-city Bus', model: 'Intercape', drivetain: '2WD', fuel: 'Diesel', luggage: 2, desc: 'Comfortable, scheduled coaches connecting major hubs.', ticketCost: 40, frequency: 'Twice Daily', image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=800&q=80' },
+  // Public & Specialty
+  { id: 'adv_motorcycle', category: 'specialty', name: 'Adventure Motorcycle', model: 'BMW R1250GS', drivetrain: '2WD', transmission: 'manual', fuel: 'Petrol', fuelL100km: 5, maxPassengers: 1, maxLargeBags: 0, maxSmallBags: 2, desc: 'Solo freedom on gravel paths.', image: 'https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&fit=crop&w=800&q=80' },
+  { id: 'byo_4x4', category: 'specialty', name: 'Bring Your Own (BYO)', model: 'Custom 4x4', drivetrain: '4x4', transmission: 'automatic', fuel: 'Any', fuelL100km: 12, maxPassengers: 5, maxLargeBags: 8, maxSmallBags: 8, desc: 'Planning a trip with your own specialized vehicle.', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
 ];
+
 export const LANDSCAPE_IMAGES = [
   'https://images.unsplash.com/photo-1520113412646-04fc68c0bc21?auto=format&fit=crop&w=1200&q=80', // Sossusvlei
   'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80', // Wildlife

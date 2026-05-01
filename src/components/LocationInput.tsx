@@ -26,6 +26,14 @@ export const LocationInput: React.FC<LocationInputProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
+  const POPULAR_SUGGESTIONS: LocationSuggestion[] = [
+    { place_id: 'whk', display_name: 'Windhoek, Khomas, Namibia', lat: '-22.5609', lon: '17.0658', address: { name: 'Windhoek' } },
+    { place_id: 'swk', display_name: 'Swakopmund, Erongo, Namibia', lat: '-22.6784', lon: '14.5268', address: { name: 'Swakopmund' } },
+    { place_id: 'eto', display_name: 'Etosha National Park, Kunene/Oshikoto, Namibia', lat: '-19.1691', lon: '15.9174', address: { name: 'Etosha National Park' } },
+    { place_id: 'sos', display_name: 'Sossusvlei, Hardap, Namibia', lat: '-24.4862', lon: '15.7957', address: { name: 'Sossusvlei' } },
+    { place_id: 'wvb', display_name: 'Walvis Bay, Erongo, Namibia', lat: '-22.9575', lon: '14.5053', address: { name: 'Walvis Bay' } },
+  ];
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
@@ -78,7 +86,7 @@ export const LocationInput: React.FC<LocationInputProps> = ({
           type="text"
           value={value}
           onChange={handleInputChange}
-          onFocus={() => value.length >= 3 && setIsOpen(true)}
+          onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
           className="w-full p-4 pl-12 pr-12 border border-stone-200 bg-white focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 outline-none transition rounded-2xl font-bold text-stone-700 shadow-sm hover:border-stone-300"
         />
@@ -108,7 +116,7 @@ export const LocationInput: React.FC<LocationInputProps> = ({
                 <Loader2 className="w-8 h-8 text-amber-500 animate-spin mx-auto mb-2" />
                 <p className="text-stone-400 text-sm font-bold uppercase tracking-widest">Searching horizons...</p>
               </div>
-            ) : (
+            ) : suggestions.length > 0 ? (
               <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
                 {suggestions.map((suggestion, idx) => (
                   <button
@@ -130,7 +138,25 @@ export const LocationInput: React.FC<LocationInputProps> = ({
                   </button>
                 ))}
               </div>
-            )}
+            ) : !value ? (
+               <div className="p-4">
+                 <p className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-3 px-1">Popular Regions</p>
+                 <div className="grid gap-1">
+                   {POPULAR_SUGGESTIONS.map((suggestion) => (
+                     <button
+                       key={suggestion.place_id}
+                       onClick={() => handleSelect(suggestion)}
+                       className="w-full text-left p-3 hover:bg-amber-50 transition-colors flex items-center gap-3 rounded-xl group"
+                     >
+                       <div className="p-1.5 bg-stone-100 rounded-lg group-hover:bg-white">
+                         <MapPin className="w-3.5 h-3.5 text-stone-400 group-hover:text-amber-500" />
+                       </div>
+                       <span className="font-bold text-sm text-stone-600 group-hover:text-amber-700">{suggestion.address.name}</span>
+                     </button>
+                   ))}
+                 </div>
+               </div>
+            ) : null}
             <div className="bg-stone-50 p-2 px-4 border-t border-stone-100 flex justify-between items-center">
               <span className="text-[9px] font-black text-stone-300 uppercase tracking-widest">Powered by LocationIQ</span>
               <span className="text-[9px] font-black text-amber-500/50 uppercase tracking-widest">Select a destination</span>

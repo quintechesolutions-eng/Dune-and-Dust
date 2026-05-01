@@ -28,7 +28,10 @@ export const searchLocations = async (query: string): Promise<LocationSuggestion
         format: 'json',
         addressdetails: 1,
         limit: 5,
-        normalizecity: 1
+        normalizecity: 1,
+        countrycodes: 'na',
+        viewbox: '11.0,-29.0,26.0,-16.0',
+        bounded: 1
       }
     });
 
@@ -49,7 +52,10 @@ export const autocompleteLocations = async (query: string): Promise<LocationSugg
         q: query,
         format: 'json',
         addressdetails: 1,
-        limit: 5
+        limit: 5,
+        countrycodes: 'na',
+        viewbox: '11.0,-29.0,26.0,-16.0',
+        bounded: 1
       }
     });
 
