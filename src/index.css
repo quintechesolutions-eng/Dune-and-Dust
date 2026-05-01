@@ -98,16 +98,76 @@
   .nav-item-active-polished {
     @apply bg-[#eff6ff] text-primary;
   }
+
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+  }
+
+  .subtle-border {
+    @apply border border-slate-200/50;
+  }
+
+  .saas-card {
+    @apply bg-white rounded-[2rem] border border-slate-200/50 shadow-[0_20px_50px_rgba(0,0,0,0.04)] overflow-hidden;
+  }
+
+  .interactive-hover {
+    @apply transition-all duration-300 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98];
+  }
 }
 
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
+    height: 4px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-stone-300 rounded-full;
+    @apply bg-stone-300/50 rounded-full hover:bg-stone-400;
+  }
+  
+  .mask-fade-b {
+    mask-image: linear-gradient(to bottom, black 85%, transparent 100%);
+  }
+
+  .mask-fade-t {
+    mask-image: linear-gradient(to top, black 85%, transparent 100%);
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .main-canvas {
+    @apply max-w-7xl mx-auto w-full px-6;
+  }
+
+  @keyframes scrollBackground {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .scrolling-landscapes {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    width: 200%;
+    animation: scrollBackground 120s linear infinite;
+    background: url('https://images.unsplash.com/photo-1516426122078-c23e76319801?q=80&w=2000&auto=format&fit=crop') repeat-x;
+    background-size: contain;
+    pointer-events: none;
+    z-index: -1;
   }
 }

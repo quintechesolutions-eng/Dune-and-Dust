@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Compass, Menu, User, LogOut, LayoutDashboard, Trophy, PlusCircle, Users, Palette } from 'lucide-react';
+import { Compass, Menu, User, LogOut, LayoutDashboard, PlusCircle, Users, Palette, Sparkles } from 'lucide-react';
 import { auth, signInWithGoogle, logout } from '../lib/firebase';
 import { useAuthState } from 'react-firebase-hooks/auth';
 
 interface NavigationProps {
   onNav: (view: string) => void;
+  onReset?: () => void;
   currentView: string;
 }
 
@@ -26,32 +27,53 @@ export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) =>
   };
 
   return (
-    <nav className="bg-white border-b border-border-subtle h-16 sticky top-0 z-50 shadow-sm">
+    <nav className="glass-panel h-16 sticky top-0 z-50 transition-all border-b border-slate-200/50">
       <div className="max-w-7xl mx-auto px-6 h-full flex justify-between items-center">
-        <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNav('home')}>
-          <Compass className="w-6 h-6 text-primary" />
-          <span className="text-xl font-extrabold text-text-main tracking-tight">Dune & Dust</span>
+        <div 
+          className="flex items-center gap-2 cursor-pointer group" 
+          onClick={() => {
+            if (onReset) onReset();
+            onNav('home');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        >
+          <div className="p-1.5 bg-primary/10 rounded-lg group-hover:bg-primary transition-all duration-300 group-hover:rotate-[360deg]">
+            <Compass className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
+          </div>
+          <span className="text-xl font-black text-stone-900 tracking-tighter uppercase italic tracking-[-0.05em]">DUNE & DUST</span>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
           <button
             onClick={() => onNav('dashboard')}
-            className={`nav-item-polished ${currentView === 'dashboard' ? 'nav-item-active-polished' : ''}`}
+            className={`nav-item-polished relative group ${currentView === 'dashboard' ? 'text-primary' : ''}`}
           >
-            <LayoutDashboard className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">My Trips</span>
+            <LayoutDashboard className="w-4 h-4 mr-2" /> 
+            <span className="hidden sm:inline">My Trips</span>
+            {currentView === 'dashboard' && <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_#2563EB]" />}
           </button>
-          <button
-            onClick={() => onNav('leaderboard')}
-            className={`nav-item-polished ${currentView === 'leaderboard' ? 'nav-item-active-polished' : ''}`}
-          >
-            <Trophy className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Leaderboard</span>
-          </button>
+
           <button
             onClick={() => onNav('social')}
-            className={`nav-item-polished ${currentView === 'social' ? 'nav-item-active-polished' : ''}`}
+            className={`nav-item-polished relative group ${currentView === 'social' ? 'text-primary' : ''}`}
           >
-            <Users className="w-4 h-4 mr-2" /> <span className="hidden sm:inline">Crew</span>
+            <Users className="w-4 h-4 mr-2" /> 
+            <span className="hidden sm:inline">Crew</span>
+            {currentView === 'social' && <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_#2563EB]" />}
           </button>
+          
+          <button
+            onClick={() => onNav('quicktrip')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-black transition-all duration-300 relative overflow-hidden group shadow-lg ${
+              currentView === 'quicktrip' 
+                ? 'bg-gradient-to-r from-orange-600 to-amber-500 text-white scale-105' 
+                : 'bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:scale-105 hover:shadow-orange-500/20'
+            }`}
+          >
+            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
+            <Sparkles className="w-4 h-4 animate-pulse" /> <span className="hidden sm:inline tracking-tight">AI SPARK PLANNER</span>
+          </button>
+
           <button
             onClick={() => onNav('wizard')}
             className="btn-primary-polished flex items-center gap-2"

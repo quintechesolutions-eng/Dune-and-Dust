@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Users, MessageSquare, UserPlus, Check, X, Send, 
-  Search, Shield, Trophy, Activity, Camera, MapPin,
+  Search, Shield, Activity, Camera, MapPin,
   Settings, User, Loader2
 } from 'lucide-react';
 import { db, auth } from '../lib/firebase';
@@ -11,8 +11,8 @@ import {
   deleteDoc, limit, orderBy
 } from 'firebase/firestore';
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { FriendRequest, UserProfile, Message, ChatSession } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { LANDSCAPE_IMAGES } from '../constants';
 
 export const SocialExplorer: React.FC = () => {
   const [user] = useAuthState(auth);
@@ -222,7 +222,12 @@ export const SocialExplorer: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-6 h-[calc(100vh-160px)] flex flex-col md:flex-row gap-8">
+    <div className="max-w-6xl mx-auto py-12 px-6 h-[calc(100vh-160px)] flex flex-col md:flex-row gap-8 relative">
+      {/* Background Landscape Scroll */}
+      <div className="absolute top-0 left-0 right-0 h-[600px] -z-10 overflow-hidden rounded-b-[4rem] opacity-20 pointer-events-none">
+        <div className="scrolling-landscapes opacity-30 grayscale" />
+        <div className="absolute inset-0 bg-gradient-to-b from-stone-50/0 via-stone-50/50 to-stone-50" />
+      </div>
       
       {/* Sidebar: Navigation + Lists */}
       <div className="w-full md:w-80 flex flex-col gap-6">

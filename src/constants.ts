@@ -1,5 +1,12 @@
 import { Bird, Palmtree, Mountain, Sun, Waves, MapPin, Tent, Camera, Users, Heart } from 'lucide-react';
 import { ACTIVITIES_DATA } from './activities-data';
+import hero1 from './assets/media__1777652280508.jpg';
+import hero2 from './assets/media__1777652280656.jpg';
+import hero3 from './assets/media__1777652280689.jpg';
+import hero4 from './assets/media__1777652280785.jpg';
+import hero5 from './assets/media__1777652280860.jpg';
+import hero6 from './assets/media__1777652360444.jpg';
+import hero7 from './assets/media__1777652360468.jpg';
 
 export const APP_NAME = "DUNE & DUST";
 
@@ -95,14 +102,7 @@ export const VEHICLE_OPTIONS = [
 ];
 
 export const LANDSCAPE_IMAGES = [
-  'https://images.unsplash.com/photo-1520113412646-04fc68c0bc21?auto=format&fit=crop&w=1200&q=80', // Sossusvlei
-  'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=1200&q=80', // Wildlife
-  'https://images.unsplash.com/photo-1517409228833-c90a18bb7201?auto=format&fit=crop&w=1200&q=80', // Coast
-  'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&w=1200&q=80', // Damaraland
-  'https://images.unsplash.com/photo-1544474673-98485293297a?auto=format&fit=crop&w=1200&q=80', // Skeleton Coast
-  'https://images.unsplash.com/photo-1528127269322-539801943592?auto=format&fit=crop&w=1200&q=80', // Caprivi
-  'https://images.unsplash.com/photo-1542314831-c6a4d14effca?auto=format&fit=crop&w=1200&q=80', // Luxury Lodge
-  'https://images.unsplash.com/photo-1493246507139-91e8bef99c02?auto=format&fit=crop&w=1200&q=80', // Mountains
+  hero1, hero2, hero3, hero4, hero5, hero6, hero7
 ];
 
 export const getTripImage = (title: string = '', location: string = '', index: number = 0) => {

@@ -81,7 +81,7 @@ export const SocialShare: React.FC<SocialShareProps> = ({ isOpen, onClose, title
 
             <div className="p-4 bg-stone-50 text-center">
                <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest leading-loose">
-                 Invite your crew to join the <br/> Expedition Leaderboard
+                 Invite your crew to join the <br/> Namibian Expedition
                </p>
             </div>
           </motion.div>
