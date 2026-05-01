@@ -211,7 +211,7 @@ export const ItineraryView: React.FC<ItineraryViewProps> = ({ trip, onBack }) =>
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{trip.data.dailyPlan.length} DAYS</span>
               </div>
               <div className="flex items-center gap-3 px-4 py-2 bg-white/5 rounded-xl border border-white/5">
-                <Navigation className="w-4 h-4 text-emerald-500" />
+                <NavIcon className="w-4 h-4 text-emerald-500" />
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">~{trip.data.tripSummary.totalEstimatedDistanceKm} KM TOTAL</span>
               </div>
             </div>

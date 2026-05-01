@@ -13,15 +13,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { SavedItinerary, TripConfig, ItineraryData } from './types';
 import { Compass, ArrowRight, Play, Loader2, Sparkles, Map as MapIcon, Car, CloudSun, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { LOADING_FACTS } from './constants';
-
-import hero1 from './assets/media__1777652280508.jpg';
-import hero2 from './assets/media__1777652280656.jpg';
-import hero3 from './assets/media__1777652280689.jpg';
-import hero4 from './assets/media__1777652280785.jpg';
-import hero5 from './assets/media__1777652280860.jpg';
-import hero6 from './assets/media__1777652360444.jpg';
-import hero7 from './assets/media__1777652360468.jpg';
+import { LOADING_FACTS, LANDSCAPE_IMAGES } from './constants';
 
 export default function App() {
   const [user, loadingAuth] = useAuthState(auth);
@@ -194,7 +186,7 @@ export default function App() {
   };
 
   const Landing = () => {
-    const images = [hero1, hero2, hero3, hero4, hero5, hero6, hero7];
+    const images = LANDSCAPE_IMAGES;
     const vehicles = [
       { name: "LAND CRUISER", series: "SERIES 79", spec: "V8 DIESEL 4.5L" },
       { name: "TOYOTA HILUX", series: "GR SPORT", spec: "2.8 GD-6 4X4" },
@@ -261,7 +253,7 @@ export default function App() {
 
         {/* Background Patterns */}
         <div className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
-        <div className="absolute inset-0 z-0 opacity-[0.02] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/topography.png')]"></div>
+        <div className="absolute inset-0 z-0 opacity-[0.02] pointer-events-none bg-stone-100/50"></div>
         
         <div className="max-w-7xl mx-auto px-6 py-20 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   MapPin, Users, Car, Heart, Settings, Plus, Trash2, Fuel, 
   ChevronRight, ChevronLeft, Plane, Map as MapIcon, CheckCircle2, Home, Activity, DollarSign, Calendar, Smile,
-  Search, Filter, Bus, ShieldCheck
+  Search, Filter, Bus, ShieldCheck, PlusCircle
 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 import { MapContainer, TileLayer, Marker, useMapEvents, Polyline } from 'react-leaflet';
@@ -440,7 +440,6 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                              );
                           })}
                        </MapContainer>
-                       </MapContainer>
 
                        {/* Map Context Menu */}
                        <AnimatePresence>
@@ -638,7 +637,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                         }))}
                         className="w-full py-6 border-2 border-dashed border-slate-200 rounded-3xl text-slate-400 font-black uppercase tracking-widest hover:bg-slate-50 hover:text-primary hover:border-primary/30 transition-all flex items-center justify-center gap-3"
                       >
-                        <PlusCircle2 className="w-5 h-5" /> Add Explorer
+                        <PlusCircle className="w-5 h-5" /> Add Explorer
                       </button>
                     </div>
                   </div>
@@ -755,41 +754,76 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                                 >
                                   Remove Vehicle
                                 </button>
+                              )}
+                            </div>
+
+                            {/* Right Side: Vehicle Selection */}
+                            <div className="lg:col-span-8 space-y-6">
+                              <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] block">Model Selection</label>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {VEHICLE_OPTIONS.filter(opt => {
+                                  if (vehicle.type === 'private') return opt.type === 'SUV' || opt.type === '4x4' || opt.type === 'Pickup';
+                                  if (vehicle.type === 'public') return opt.type === 'Bus' || opt.type === 'Shuttle';
+                                  return true;
+                                }).map(opt => (
+                                  <button
+                                    key={opt.name}
+                                    onClick={() => setConfig(prev => ({
+                                      ...prev,
+                                      vehicles: prev.vehicles.map(v => v.id === vehicle.id ? { 
+                                        ...v, 
+                                        make: opt.name,
+                                        model: opt.model,
+                                        drivetrain: opt.drivetrain,
+                                        transmission: opt.transmission as any,
+                                        fuelType: opt.fuel,
+                                        fuelConsumptionL100km: opt.fuelL100km,
+                                        maxPassengers: opt.maxPassengers,
+                                        maxLargeBags: opt.maxLargeBags,
+                                        maxSmallBags: opt.maxSmallBags,
+                                        luggageCapacity: opt.maxLargeBags + Math.floor(opt.maxSmallBags / 2)
+                                      } : v)
+                                    }))}
+                                    className={`p-6 rounded-[2rem] border-2 text-left transition-all flex justify-between items-start group ${vehicle.make === opt.name ? 'border-primary bg-primary/5' : 'border-slate-100 hover:border-slate-200'}`}
+                                  >
+                                    <div className="flex gap-4">
+                                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${vehicle.make === opt.name ? 'bg-primary text-white' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'}`}>
+                                        <Car className="w-6 h-6" />
+                                      </div>
+                                      <div>
+                                        <h4 className="font-black text-slate-900 leading-tight uppercase tracking-tight">{opt.name}</h4>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">{opt.model} • {opt.type}</p>
                                       </div>
                                     </div>
                                     {vehicle.make === opt.name && (
-                                      <div className="self-center">
-                                        <CheckCircle2 className="w-5 h-5 text-amber-600" />
-                                      </div>
+                                      <CheckCircle2 className="w-5 h-5 text-primary mt-1" />
                                     )}
-                                  </div>
+                                  </button>
                                 ))}
-                            </div>
-
-                            {vehicle.type === 'public' && vehicle.ticketCost && (
-                              <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <Bus className="w-6 h-6 text-blue-600" />
-                                  <div>
-                                    <p className="text-[10px] font-black text-blue-400 uppercase">Ticket Cost / Frequency</p>
-                                    <p className="text-sm font-black text-blue-900">{getCurrencySymbol()}{vehicle.ticketCost} • {vehicle.frequency}</p>
-                                  </div>
-                                </div>
-                                <ShieldCheck className="w-6 h-6 text-blue-200" />
                               </div>
-                            )}
+
+                              {vehicle.type === 'public' && vehicle.ticketCost && (
+                                <div className="mt-6 p-4 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <Bus className="w-6 h-6 text-blue-600" />
+                                    <div>
+                                      <p className="text-[10px] font-black text-blue-400 uppercase">Ticket Cost / Frequency</p>
+                                      <p className="text-sm font-black text-blue-900">{getCurrencySymbol()}{vehicle.ticketCost} • {vehicle.frequency}</p>
+                                    </div>
+                                  </div>
+                                  <ShieldCheck className="w-6 h-6 text-blue-200" />
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
 
               {step === 4 && (
-                <div>
-                  <h2 className="text-3xl font-black mb-2">The Soul</h2>
-                              {step === 4 && (
                 <div className="flex-1 flex flex-col overflow-hidden">
                   <div className="p-8 md:p-12 shrink-0 border-b border-slate-100">
                     <h2 className="text-4xl font-black text-slate-900 tracking-tighter mb-3 uppercase italic">THE VIBE</h2>
@@ -907,7 +941,10 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] pl-1">Departure Sequence</label>
+                          <div className="flex justify-between items-center pr-1">
+                            <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] pl-1">Departure Sequence</label>
+                            {!config.logistics.startDate && <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Required</span>}
+                          </div>
                           <div className="relative group">
                             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-primary transition-colors" />
                             <input 
@@ -1121,7 +1158,8 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
             {step < 6 ? (
               <button 
                 onClick={next}
-                className="px-8 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 group"
+                disabled={step === 5 && !config.logistics.startDate}
+                className="px-8 py-4 bg-primary text-white rounded-2xl font-black text-xs uppercase tracking-widest flex items-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
                 Continue <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
