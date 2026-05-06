@@ -87,7 +87,7 @@ export const VEHICLE_OPTIONS = [
   // Eco & Hybrid
   { id: 'hybrid_cross', category: 'eco_hybrid', type: 'SUV', name: 'Eco Crossover', model: 'Toyota Corolla Cross Hybrid', drivetrain: 'FWD', transmission: 'automatic', isHybrid: true, fuel: 'Petrol/Electric', fuelL100km: 4.3, maxPassengers: 5, maxLargeBags: 2, maxSmallBags: 3, desc: 'Ultra-efficient, smooth on tar and well-graded gravel.', image: 'https://images.unsplash.com/photo-1621135802920-133df287f89c?auto=format&fit=crop&w=800&q=80' },
   { id: 'hybrid_suv', category: 'eco_hybrid', type: 'SUV', name: 'Premium Hybrid SUV', model: 'Toyota RAV4 Hybrid', drivetrain: 'AWD', transmission: 'automatic', isHybrid: true, fuel: 'Petrol/Electric', fuelL100km: 4.8, maxPassengers: 5, maxLargeBags: 3, maxSmallBags: 4, desc: 'The perfect balance of efficiency and Namibian capability.', image: 'https://images.unsplash.com/photo-1566473065146-d206f3984722?auto=format&fit=crop&w=800&q=80' },
-  
+
   // Rugged 4x4
   { id: 'heavy_4x4', category: 'rugged_4x4', type: '4x4', name: 'Heavy-Duty Expedition 4x4', model: 'Land Cruiser 79', drivetrain: '4x4', transmission: 'manual', isHybrid: false, fuel: 'Diesel', fuelL100km: 14, maxPassengers: 5, maxLargeBags: 6, maxSmallBags: 4, desc: 'The gold standard for African expeditions. Invincible.', image: 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80' },
   { id: 'standard_4x4', category: 'rugged_4x4', type: '4x4', name: 'Standard 4x4 SUV', model: 'Toyota Fortuner', drivetrain: '4x4', transmission: 'automatic', isHybrid: false, fuel: 'Diesel', fuelL100km: 9.5, maxPassengers: 7, maxLargeBags: 4, maxSmallBags: 3, desc: 'Reliable, comfortable, handles all Namibian gravel roads.', image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=800&q=80' },
@@ -109,7 +109,7 @@ export const LANDSCAPE_IMAGES = [
 
 export const getTripImage = (title: string = '', location: string = '', index: number = 0) => {
   const normalizedLoc = (location || title || '').toLowerCase();
-  
+
   // High-fidelity keyword mapping for Namibia
   let searchTerms = 'namibia,landscape';
   if (normalizedLoc.includes('etosha')) searchTerms = 'namibia,wildlife,safari,lion,elephant';

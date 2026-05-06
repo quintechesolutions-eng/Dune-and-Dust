@@ -13,6 +13,7 @@ import {
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { motion, AnimatePresence } from 'motion/react';
 import { LANDSCAPE_IMAGES } from '../constants';
+import { UserProfile, FriendRequest, Message, ChatSession } from '../types';
 
 export const SocialExplorer: React.FC = () => {
   const [user] = useAuthState(auth);

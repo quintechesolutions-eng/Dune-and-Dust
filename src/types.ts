@@ -24,6 +24,7 @@ export interface Vehicle {
   currentLargeBags: number;
   currentSmallBags: number;
   driverId?: number; // Linked to Traveler.id
+  ticketCost?: number;
 }
 
 export interface Logistics {

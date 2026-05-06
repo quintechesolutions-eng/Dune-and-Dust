@@ -9,7 +9,7 @@ interface NavigationProps {
   currentView: string;
 }
 
-export const Navigation: React.FC<NavigationProps> = ({ onNav, currentView }) => {
+export const Navigation: React.FC<NavigationProps> = ({ onNav, onReset, currentView }) => {
   const [user] = useAuthState(auth);
   const [theme, setTheme] = useState('standard');
 
