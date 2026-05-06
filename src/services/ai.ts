@@ -174,7 +174,7 @@ export const generateItinerary = async (config: TripConfig): Promise<ItineraryDa
 
   const response = await openrouter.chat.send({
     chatRequest: {
-      model: "google/gemini-2.0-flash-lite-preview-02-05:free",
+      model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
       messages: [
         { role: "system", content: systemInstruction },
         { role: "user", content: prompt }

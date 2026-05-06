@@ -304,8 +304,8 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
         ))}
       </div>
 
-      <div className="saas-card flex-1 flex flex-col max-h-[85vh] relative bg-white">
-        <div className="flex-1 overflow-hidden flex flex-col">
+      <div className="saas-card flex-1 flex flex-col min-h-0 relative bg-white mb-20 shadow-2xl">
+        <div className="flex-1 flex flex-col">
           <AnimatePresence mode="wait">
             <motion.div
               key={step}
@@ -314,10 +314,10 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
               animate="animate"
               exit="exit"
               transition={{ duration: 0.4, type: 'spring', bounce: 0 }}
-              className="flex-1 flex flex-col overflow-hidden"
+              className="flex-1 flex flex-col"
             >
               {step === 1 && (
-                <div className="flex h-full overflow-hidden">
+                <div className="flex flex-col lg:flex-row h-full min-h-[600px]">
                   {/* Left Column: Input/Controls */}
                   <div className="w-full lg:w-[45%] flex flex-col p-8 md:p-12 border-r border-slate-100 bg-slate-50/30">
                     <div className="mb-8">
@@ -485,7 +485,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                       <div className="h-1 w-12 bg-primary rounded-full"></div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto custom-scrollbar pr-4 -mr-4 mask-fade-b pb-12">
+                    <div className="flex-1 pr-4 -mr-4 pb-12">
                       <div className="space-y-6">
                         {config.customPickups.length > 0 ? (
                            <Reorder.Group 
@@ -542,13 +542,13 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
               )}
 
               {step === 2 && (
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col">
                   <div className="p-8 md:p-12 shrink-0 border-b border-slate-100">
                     <h2 className="text-4xl font-black text-slate-900 tracking-tighter mb-3 uppercase italic">THE CREW</h2>
                     <p className="text-slate-500 font-medium text-lg">Who are your fellow explorers?</p>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar mask-fade-b pb-20">
+                  <div className="flex-1 p-8 md:p-12 pb-20">
                     <div className="max-w-4xl mx-auto space-y-6">
                       {config.travelers.length > 0 && config.travelers.every(t => t.age > 0 && t.age < 18) && (
                         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="p-5 bg-amber-50 border border-amber-100 text-amber-900 rounded-2xl text-sm flex items-start gap-4 shadow-sm">
@@ -645,7 +645,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
               )}
 
               {step === 3 && (
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col">
                   <div className="p-8 md:p-12 shrink-0 border-b border-slate-100 flex justify-between items-end">
                     <div>
                       <h2 className="text-4xl font-black text-slate-900 tracking-tighter mb-3 uppercase italic">THE WHEELS</h2>
@@ -684,7 +684,7 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
                     )}
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar mask-fade-b pb-24">
+                  <div className="flex-1 p-8 md:p-12 pb-24">
                     <div className="max-w-5xl mx-auto space-y-12">
                       {config.vehicles.map((vehicle, vIdx) => (
                         <div 
@@ -824,13 +824,13 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
               )}
 
               {step === 4 && (
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col">
                   <div className="p-8 md:p-12 shrink-0 border-b border-slate-100">
                     <h2 className="text-4xl font-black text-slate-900 tracking-tighter mb-3 uppercase italic">THE VIBE</h2>
                     <p className="text-slate-500 font-medium text-lg">What type of activities and mood fit your vision?</p>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar mask-fade-b pb-20">
+                  <div className="flex-1 p-8 md:p-12 pb-20">
                     <div className="max-w-4xl mx-auto space-y-12">
                       <div>
                         <label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-6 block">Select Expedition Mood</label>
@@ -896,13 +896,13 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
               )}
 
               {step === 5 && (
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col">
                   <div className="p-8 md:p-12 shrink-0 border-b border-slate-100">
                     <h2 className="text-4xl font-black text-slate-900 tracking-tighter mb-3 uppercase italic">LOGISTICS</h2>
                     <p className="text-slate-500 font-medium text-lg">Final structural details and mission parameters.</p>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar mask-fade-b pb-20">
+                  <div className="flex-1 p-8 md:p-12 pb-20">
                     <div className="max-w-4xl mx-auto space-y-12">
                       {(() => {
                         const totalBudget = config.travelers.reduce((acc, t) => acc + (t.budget || 0), 0);
@@ -1038,13 +1038,13 @@ export const Wizard: React.FC<WizardProps> = ({ onGenerate, isLoading }) => {
               )}
 
               {step === 6 && (
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col">
                   <div className="p-8 md:p-12 shrink-0 border-b border-slate-100">
                     <h2 className="text-4xl font-black text-slate-900 tracking-tighter mb-3 uppercase italic">THE STAY</h2>
                     <p className="text-slate-500 font-medium text-lg">What type of homes or camps fit your vision?</p>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar mask-fade-b pb-20">
+                  <div className="flex-1 p-8 md:p-12 pb-20">
                     <div className="max-w-4xl mx-auto space-y-12">
                       <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
                         <label className="block text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-6 text-center">Movement Philosophy</label>
